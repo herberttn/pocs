@@ -123,7 +123,30 @@ function poc() {
       return code.replace(placeholder, url);
     },
 
-    // if serving, serve the asset
+    generateBundle(_, bundle) {
+      console.log('='.repeat(process.stdout.columns));
+      console.log('generateBundle hook:', { _, bundle: Object.keys(bundle) });
+      const ref = this.emitFile({
+        name: 'zzzzzzzz.json',
+        source: '{}',
+        type: 'asset',
+      });
+      const x = this.getFileName(ref);
+      console.log('generateBundle hook:', { zzz: x });
+      console.log('generateBundle hook:', { bundle: Object.keys(bundle) });
+      console.log('generateBundle hook:', { bundle: bundle[x] });
+
+      const z = bundle[x];
+      delete bundle[x];
+      z.fileName = z.fileName.replace('/', '/messages/');
+      bundle[z.fileName] = z;
+
+      console.log('='.repeat(process.stdout.columns));
+      console.log('generateBundle hook:', { bundle: Object.keys(bundle) });
+      console.log('generateBundle hook:', { bundle: bundle[x] });
+    },
+
+      // if serving, serve the asset
     // if building, hook not executed
     configureServer(server: ViteDevServer) {
       console.log('='.repeat(process.stdout.columns));
