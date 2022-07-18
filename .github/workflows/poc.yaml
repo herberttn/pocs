@@ -1,0 +1,24 @@
+name: poc
+
+on:
+  workflow_dispatch:
+    inputs:
+      context:
+        description: The context to which the deployment should be made in gh-pages
+        required: true
+        default: //qwe/asd////zxc///
+        type: string
+
+jobs:
+  poc:
+    runs-on: ubuntu-latest
+    env:
+      aaa: ${{ inputs.context }}
+      bbb: ${{ !inputs.context }}
+      ccc: ${{ join(inputs.context, 'xxx', '/') }}
+      ddd: ${{ join(fromJSON(toJSON(format('["{0}", "{1}"]', inputs.context, 'xxx'))), '/') }}
+      eee: ${{ format('{0}', inputs.context) }}
+      fff: ${{ format('{0}{1}{2}', inputs.context, inputs.context && '/', 'xxx') }}
+      ggg: ${{ format('{0}{1}{2}', inputs.context, !inputs.context || '/', 'xxx') }}
+    steps:
+      - run: cat $GITHUB_ENV
