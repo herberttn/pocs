@@ -1,0 +1,26 @@
+name: setup
+description: Setup environment to run a task
+
+inputs:
+  context:
+    description: Context to normalize
+    required: true
+
+outputs:
+  context:
+    description: Normalized context
+    value: ${{ steps.normalizer.outputs.context }}
+
+runs:
+  using: composite
+  steps:
+    - run: |
+        context=$(echo $context | tr -s /)
+        context=${context#/}
+        context=${context%/}
+        
+        echo ::set-output name=context::$context
+      id: normalizer
+      env:
+        context: ${{ inputs.context }}
+      shell: bash

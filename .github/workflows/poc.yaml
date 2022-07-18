@@ -1,0 +1,82 @@
+name: poc
+
+on:
+  workflow_dispatch:
+    inputs:
+      context-value:
+        description: The context to which the deployment should be made in gh-pages
+        required: true
+        default: //qwe/asd////zxc///
+        type: string
+      context-empty:
+        description: The context to which the deployment should be made in gh-pages
+        required: false
+        type: string
+
+env:
+  aaa-value: ${{ inputs.context-value }}
+  bbb-value: ${{ !inputs.context-value }}
+  ccc-value: ${{ join(inputs.context-value, '/') }}
+  ddd-value: ${{ join(fromJSON(toJSON(format('["{0}", "{1}"]', inputs.context-value, 'xxx'))), '/') }}
+  eee-value: ${{ format('{0}', inputs.context-value) }}
+  fff-value: ${{ format('{0}{1}{2}', inputs.context-value, inputs.context-value && '/', 'xxx') }}
+  ggg-value: ${{ format('{0}{1}{2}', inputs.context-value, !inputs.context-value || '/', 'xxx') }}
+  hhh-value: ${{ inputs.context-value && 'fallback' }}
+  iii-value: ${{ inputs.context-value || 'fallback' }}
+
+jobs:
+  poc-value:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/normalize-context
+        id: normalizer
+        with:
+          context: ${{ inputs.context-value }}
+      - run: echo ---$EEE---
+        env:
+          EEE: ${{ steps.normalizer.outputs.context }}
+      - run: cat $GITHUB_ENV
+  poc-empty:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/normalize-context
+        id: normalizer
+        with:
+          context: ${{ inputs.context-empty }}
+      - run: echo ---$EEE---
+        env:
+          EEE: ${{ steps.normalizer.outputs.context }}
+      - run: cat $GITHUB_ENV
+
+#  poc-value:
+#    runs-on: ubuntu-latest
+#    env:
+#      aaa-value: ${{ inputs.context-value }}
+#      bbb-value: ${{ !inputs.context-value }}
+#      ccc-value: ${{ join(inputs.context-value, '/') }}
+#      ddd-value: ${{ join(fromJSON(toJSON(format('["{0}", "{1}"]', inputs.context-value, 'xxx'))), '/') }}
+#      eee-value: ${{ format('{0}', inputs.context-value) }}
+#      fff-value: ${{ format('{0}{1}{2}', inputs.context-value, inputs.context-value && '/', 'xxx') }}
+#      ggg-value: ${{ format('{0}{1}{2}', inputs.context-value, !inputs.context-value || '/', 'xxx') }}
+#      hhh-value: ${{ inputs.context-value && 'fallback' }}
+#      iii-value: ${{ inputs.context-value || 'fallback' }}
+#    environment: ${{ env.fff1 }}
+#    steps:
+#      - run: cat $GITHUB_ENV
+#  poc-empty:
+#    runs-on: ubuntu-latest
+#    env:
+#      aaa-empty: ${{ inputs.context-empty }}
+#      bbb-empty: ${{ !inputs.context-empty }}
+#      ccc-empty: ${{ join(inputs.context-empty, '/') }}
+#      ddd-empty: ${{ join(fromJSON(toJSON(format('["{0}", "{1}"]', inputs.context-empty, 'xxx'))), '/') }}
+#      eee-empty: ${{ format('{0}', inputs.context-empty) }}
+#      fff-empty: ${{ format('{0}{1}{2}', inputs.context-empty, inputs.context-empty && '/', 'xxx') }}
+#      ggg-empty: ${{ format('{0}{1}{2}', inputs.context-empty, !inputs.context-empty || '/', 'xxx') }}
+#      hhh-empty: ${{ inputs.context-empty && 'fallback' }}
+#      iii-empty: ${{ inputs.context-empty || 'fallback' }}
+#    environment: ${{ env.fff2 }}
+#    steps:
+#      - run: cat $GITHUB_ENV
