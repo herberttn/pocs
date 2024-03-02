@@ -1,4 +1,4 @@
-name: docs
+name: poc-gh-pages
 
 on:
   push:
