@@ -1,0 +1,22 @@
+name: poc-release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  prep1:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: raven-actions/debug@v1
+        with:
+          vars-context: ${{ toJson(vars) }}  # optional
+          secrets-context: ${{ toJson(secrets) }}  # optional
+          needs-context: ${{ toJson(needs) }}  # optional
+          inputs-context: ${{ toJson(inputs) }}  # optional
+  prep2:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: crazy-max/ghaction-dump-context@v2
