@@ -1,0 +1,50 @@
+name: poc-syntax-outputs
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: name1
+          - name: name2
+          - name: name3
+          - name: name4
+          - name: name5
+    continue-on-error: true
+    steps:
+      - uses: actions/github-script@v7
+        id: set-outputs
+        with:
+          script: |
+            core.setOutput('${{ matrix.name }}', `value-of-${{ matrix.name }}`);
+
+    outputs:
+      name1: ${{ steps.set-outputs.outputs.name1 }}
+      name2: ${{ steps.set-outputs.outputs.name2 }}
+      name3: ${{ steps.set-outputs.outputs.name3 }}
+      name4: ${{ steps.set-outputs.outputs.name4 }}
+      name5: ${{ steps.set-outputs.outputs.name5 }}
+      namesToJson: ${{ toJson(steps.set-outputs.outputs) }}
+
+  collect:
+    if: always()
+    needs: run
+    runs-on: ubuntu-latest
+    steps:
+      - run: cat "$GITHUB_OUTPUT"
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('${{ needs.run.outputs.name1 }}');
+            console.log('${{ needs.run.outputs.name2 }}');
+            console.log('${{ needs.run.outputs.name3 }}');
+            console.log('${{ needs.run.outputs.name4 }}');
+            console.log('${{ needs.run.outputs.name5 }}');
+            console.log('${{ needs.run.outputs.namesToJson }}');
