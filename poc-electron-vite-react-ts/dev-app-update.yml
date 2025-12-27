@@ -1,3 +1,0 @@
-provider: generic
-url: https://example.com/auto-updates
-updaterCacheDirName: poc-electron-vite-react-ts-updater
