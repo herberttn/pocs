@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@principal-ai/markdown-search": "^2.0.7",
+    "@types/node": "^25.0.3",
+    "glob": "^13.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
