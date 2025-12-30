@@ -1,7 +1,11 @@
 import { z } from 'zod';
-import { createToolCallAccuracyScorerCode } from '@mastra/evals/scorers/code';
-import { createCompletenessScorer } from '@mastra/evals/scorers/code';
-import { createScorer } from '@mastra/core/scores';
+import { createToolCallAccuracyScorerCode } from '@mastra/evals/scorers/prebuilt';
+import { createCompletenessScorer } from '@mastra/evals/scorers/prebuilt';
+import {
+  getAssistantMessageFromRunOutput,
+  getUserMessageFromRunInput,
+} from '@mastra/evals/scorers/utils';
+import { createScorer } from '@mastra/core/evals';
 
 export const toolCallAppropriatenessScorer = createToolCallAccuracyScorerCode({
   expectedTool: 'weatherTool',
@@ -12,12 +16,13 @@ export const completenessScorer = createCompletenessScorer();
 
 // Custom LLM-judged scorer: evaluates if non-English locations are translated appropriately
 export const translationScorer = createScorer({
+  id: 'translation-quality-scorer',
   name: 'Translation Quality',
   description:
     'Checks that non-English location names are translated and used correctly',
   type: 'agent',
   judge: {
-    model: 'anthropic/claude-sonnet-4-5-20250929',
+    model: 'openai/gpt-4o',
     instructions:
       'You are an expert evaluator of translation quality for geographic locations. ' +
       'Determine whether the user text mentions a non-English location and whether the assistant correctly uses an English translation of that location. ' +
@@ -26,8 +31,8 @@ export const translationScorer = createScorer({
   },
 })
   .preprocess(({ run }) => {
-    const userText = (run.input?.inputMessages?.[0]?.content as string) || '';
-    const assistantText = (run.output?.[0]?.content as string) || '';
+    const userText = getUserMessageFromRunInput(run.input) || '';
+    const assistantText = getAssistantMessageFromRunOutput(run.output) || '';
     return { userText, assistantText };
   })
   .analyze({

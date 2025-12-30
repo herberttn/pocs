@@ -14,19 +14,20 @@
   "license": "ISC",
   "type": "module",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
-    "@mastra/core": "^0.24.1",
-    "@mastra/evals": "^0.14.4",
-    "@mastra/libsql": "^0.16.2",
-    "@mastra/loggers": "^0.10.19",
-    "@mastra/memory": "^0.15.11",
-    "zod": "^4.1.12"
+    "@mastra/core": "^1.0.0-beta.18",
+    "@mastra/evals": "^1.0.0-beta.3",
+    "@mastra/libsql": "^1.0.0-beta.10",
+    "@mastra/loggers": "^1.0.0-beta.3",
+    "@mastra/memory": "^1.0.0-beta.9",
+    "@mastra/observability": "^1.0.0-beta.9",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1",
-    "mastra": "^0.18.1",
+    "@types/node": "^25.0.3",
+    "mastra": "^1.0.0-beta.12",
     "typescript": "^5.9.3"
   }
 }
