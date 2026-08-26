@@ -1,0 +1,226 @@
+---
+title: Metadata Management
+sidebar_label: Metadata Management
+---
+
+# Metadata Management in Oswald
+
+Effective metadata management is crucial for maintaining a well-organized and scalable application. This guide explains how to organize your `.osw` metadata files using directories to improve project organization, enhance collaboration, and simplify maintenance.
+
+## Understanding Metadata File Organization
+
+By default, all metadata files are stored in the `resources/metadata` directory of your application:
+
+```
+application/resources/metadata/
+    ├── login.osw
+    ├── registration.osw
+    ├── password-reset.osw
+    ├── user-list.osw
+    ├── user-details.osw
+    ├── user-permissions.osw
+    ├── dashboard.osw
+    ├── sales-report.osw
+    └── activity-log.osw
+```
+
+However, Oswald Editor fully supports organizing your metadata files in subdirectories for a better project structure:
+
+```
+application/resources/metadata/
+    ├── authentication/
+    │   ├── login.osw
+    │   ├── registration.osw
+    │   └── password-reset.osw
+    └── user-management/
+        ├── user-list.osw
+        ├── user-details.osw
+        └── user-permissions.osw
+```
+
+This organizational capability allows you to group related fragments logically, making your project easier to navigate and maintain as it grows.
+
+## Important Caveats
+
+### Unique Fragment Names Requirement
+
+Fragment names must be unique across your entire project, regardless of directory location. For example, the following structure would cause conflicts:
+
+```
+application/resources/metadata/
+    ├── module-a/
+    │   ├── card-list.osw
+    └── module-b/
+        ├── card-list.osw // ⚠️ Conflict with module-a/card-list.osw
+```
+
+The Oswald Engine identifies fragments by their file name, not their full path, so duplicate file names will lead to unexpected behavior.
+
+### Manual File System Changes
+
+If you create directories or move files directly in the file system (outside of the Oswald Editor):
+
+1. You must close both the application and the editor completely
+2. Restart both applications to ensure the changes are properly recognized
+3. Failing to restart may lead to inconsistent behavior or errors
+
+## Creating and Managing Directories in the Editor
+
+### Creating a Directory
+
+1. In the Metadata panel, right-click on the main `metadata` tree node or any existing directory node
+2. Select "Create Directory" from the context menu
+3. Enter a name for your new directory and confirm
+
+<figure>
+  ![Right-click context menu in Metadata panel showing Create Directory option](./../../../assets/editor/fragments/create-directory-action.png)
+  <figcaption>Figure 1 - Right-click context menu in the Metadata panel showing the "Create Directory" option.</figcaption>
+</figure>
+
+<figure>
+  ![Dialog box prompting user to enter a name for the new directory](./../../../assets/editor/fragments/create-directory-dialog.png)
+  <figcaption>Figure 2 - Directory creation dialog prompting for the new directory name.</figcaption>
+</figure>
+
+<figure>
+  ![Metadata panel tree view displaying the newly created directory](./../../../assets/editor/fragments/create-directory-done.png)
+  <figcaption>Figure 3 - Metadata panel tree view displaying the newly created directory.</figcaption>
+</figure>
+
+### Deleting a Directory
+
+1. In the Metadata panel, right-click on any non-root directory tree node
+2. Select "Delete Directory"
+3. A confirmation dialog will be shown, showing if the directory has any fragments and their references
+
+<figure>
+  ![Right-click context menu on a directory showing Delete Directory option](./../../../assets/editor/fragments/delete-directory-action.png)
+  <figcaption>Figure 4 - Right-click context menu on a directory showing the "Delete Directory" option.</figcaption>
+</figure>
+
+<figure>
+  ![Confirmation dialog displaying directory contents and fragment references before deletion](./../../../assets/editor/fragments/delete-directory-dialog.png)
+  <figcaption>Figure 5 - Delete confirmation dialog showing the directory fragments and their references.</figcaption>
+</figure>
+
+### Saving new Fragments in a Specific Directory
+
+1. Right-click the fragment tab and select "Save Fragment"
+2. Enter the fragment name
+3. Select the fragment save location in the Operating System native dialog
+4. Confirm
+
+<figure>
+  ![Right-click context menu on fragment tab showing Save Fragment option](./../../../assets/editor/fragments/save-fragment-action.png)
+  <figcaption>Figure 6 - Right-click context menu on fragment tab showing the "Save Fragment" option.</figcaption>
+</figure>
+
+<figure>
+  ![Native operating system file save dialog for selecting fragment location and name](./../../../assets/editor/fragments/save-fragment-dialog.png)
+  <figcaption>Figure 7 - Native operating system dialog for saving the fragment to a specific directory.</figcaption>
+</figure>
+
+<figure>
+  ![Metadata panel displaying the newly saved fragment in its designated directory](./../../../assets/editor/fragments/save-fragment-dir-done.png)
+  <figcaption>Figure 8 - Metadata panel displaying the newly saved fragment in its designated directory.</figcaption>
+</figure>
+
+### Moving Existing Fragments to a Directory
+
+1. In the Metadata Panel, locate the fragment you want to move
+2. Right-click the fragment and select "Move to Directory"
+3. Choose the destination directory or create a new one
+4. Confirm the move operation
+
+<figure>
+  ![Right-click context menu on fragment showing Move to Directory option](./../../../assets/editor/fragments/move-fragment-action.png)
+  <figcaption>Figure 9 - Right-click context menu on fragment showing the "Move to Directory" option.</figcaption>
+</figure>
+
+<figure>
+  ![Native operating system file dialog for selecting the destination directory for fragment move](./../../../assets/editor/fragments/move-fragment-dialog.png)
+  <figcaption>Figure 10 - Native operating system dialog for selecting the destination directory for the fragment move operation.</figcaption>
+</figure>
+
+<figure>
+  ![Metadata panel showing the fragment successfully moved to its new directory location](./../../../assets/editor/fragments/move-fragment-done.png)
+  <figcaption>Figure 11 - Metadata panel showing the fragment successfully moved to its new directory location.</figcaption>
+</figure>
+
+## Best Practices for Metadata Organization
+
+### Logical Grouping Strategies
+
+#### By Feature or Domain
+
+```
+application/resources/metadata/
+    ├── authentication/
+    │   ├── login.osw
+    │   ├── registration.osw
+    │   └── password-reset.osw
+    ├── user-management/
+    │   ├── user-list.osw
+    │   ├── user-details.osw
+    │   └── user-permissions.osw
+    └── reporting/
+        ├── dashboard.osw
+        ├── sales-report.osw
+        └── activity-log.osw
+```
+
+#### By Application Flow
+
+```
+application/resources/metadata/
+    ├── onboarding/
+    │   ├── welcome.osw
+    │   ├── user-profile-setup.osw
+    │   └── preferences.osw
+    ├── main-application/
+    │   ├── home.osw
+    │   ├── search.osw
+    │   └── notifications.osw
+    └── settings/
+        ├── account.osw
+        ├── privacy.osw
+        └── notifications.osw
+```
+
+#### By Team Ownership
+
+```
+application/resources/metadata/
+    ├── team-alpha/
+    │   ├── feature-one.osw
+    │   └── feature-two.osw
+    └── team-beta/
+        ├── feature-three.osw
+        └── feature-four.osw
+```
+
+### Naming Conventions
+
+* Use consistent and descriptive names for both directories and files
+* Use kebab-case for both directory and file names
+* Avoid deeply nested structures (aim for a maximum of 2 or 3 levels)
+
+
+## Migration Guide for Existing Projects
+
+If you have an existing project with all metadata files at the root level, follow these steps to reorganize:
+
+1. Plan your directory structure before making changes
+2. Create directories in the Metadata Panel using the right-click menu
+3. Move files gradually, testing after each significant reorganization
+4. Communicate changes to all team members
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Possible Cause | Solution |
+|-------|---------------|----------|
+| Fragment not found | Manual file system changes without restart | Close and restart both the application and editor |
+| Duplicate fragment errors | Same filename in different directories | Rename one of the fragments to ensure uniqueness |
+| Fragments not appearing in editor | Incorrect file path | Ensure all files are within the `resources/metadata` directory tree |

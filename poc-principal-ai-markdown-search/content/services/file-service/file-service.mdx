@@ -1,0 +1,240 @@
+---
+sidebar_label: FileService
+---
+
+import Details from '@theme/Details';
+
+# `FileService`
+
+The service goal is to facilitate the interaction with files, providing methods to interact with them. Currently the service has two handlers, described below.
+
+## Handlers
+
+The `FileService` works as a bridge between the developer and the chosen file handler that is responsible for the actual execution of the called methods.
+   * [`DefaultFileHandler`](./handlers/default-file-handler.mdx) - Handler that interacts with the configured endpoints to perform file operations. This handler is the Service's default.
+   * [`MemoryFileHandler`](./handlers/memory-file-handler.mdx) - Handler that interacts with files in-memory, the files never leave the end user device.
+
+## Methods
+
+> **Note**
+> `FileService` implements only the common methods between all handlers that implements `FileHandler` interface. To check specific methods, check the desired handler documentation.
+
+### `download`
+ 
+This method will delegate the `download` responsibility to the current used `FileHandler`. In the example below, we are using `DefaultFileHandler`, therefore, would download the given file through a `GET HTTP` request targeting the `path` argument.
+
+> You can change the `FileService`'s current handler calling `FileService.setFileHandler(otherHandlerImplementation)` to customize this behavior.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Download file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    FileService.download('/download', 'file1');
+  }
+}
+```
+</Details>
+
+### `getFileHandler`
+
+Returns the FileHandler instance used by the `FileService` singleton.
+
+> By default the `DefaultFileHandler` is used, but you can change the `FileService`'s current handler calling `FileService.setFileHandler(otherHandlerImplementation)` to customize this behavior.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get FileHandler instance used by FileService singleton</code></summary>}>
+```tsx
+function bootstrap(): Promise<void> {
+  const fileHandler = FileService.getFileHandler();
+  fileHandler.preview('/resources/files/file01');
+}
+```
+</Details>
+
+### `getFileHandlerInstance`
+
+Returns a FileHandler instance from a previous registered FileHandlerProvider.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get FileHandler Instance</code></summary>}>
+```tsx
+function bootstrap(): Promise<void> {
+  const fileHandler = FileService.getFileHandlerInstance('my-handler');
+  fileHandler.preview('/resources/files/file01');
+}
+```
+</Details>
+
+### `getPreviewURL`
+
+This method will delegate the `getPreviewURL` responsibility to the current used `FileHandler`. In the example below, we are using `DefaultFileHandler`, therefore, would download the given file through a `GET HTTP` request targeting the endpoint set by `FileHandlerConfiguration.previewUrl` + `path` argument.
+
+> You can change the `FileService`'s current handler calling `FileService.setFileHandler(otherHandlerImplementation)` to customize this behavior.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get preview URL</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    void FileService.getPreviewURL('/resources/files/file01')
+      .then((url: string) => {
+        this.avatar.setImage(url);
+      });
+  }
+}
+```
+</Details>
+
+### `preview`
+
+This method will delegate the `preview` responsibility to the current used `FileHandler`. In the example below, we are using `DefaultFileHandler`, therefore, would open the given file through a `FileHandlerConfiguration.previewUrl` request targeting the endpoint set by `FileHandlerConfiguration.previewUrl` + `path` argument.
+
+> You can change the `FileService`'s current handler calling `FileService.setFileHandler(otherHandlerImplementation)` to customize this behavior.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Preview file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    FileService.preview('/resources/files/file01');
+  }
+}
+```
+</Details>
+
+### `registerFileHandlerProvider`
+
+Registers a new FileHandlerProvider.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Register FileHandlerProvider</code></summary>}>
+```tsx
+function bootstrap(): Promise<void> {
+  const myFileHandlerProvider = (): FileHandler => {
+    const configuration = new FileHandlerConfiguration();
+    configuration.previewUrl = '/api/resources/files/preview?uri=';
+    configuration.uploadUrl = '/api/resources/files/upload';
+    configuration.uploadResponseState = HttpStatus.CREATED;
+    configuration.removeUrl = '/api/resources/files/remove';
+    configuration.removeResponseState = HttpStatus.OK;
+        
+    const fileHandler = new MyFileHandler();
+    fileHandler.setConfiguration(configuration);
+      
+    return fileHandler;
+  }
+
+  FileService.registerFileHandlerProvider({ provider: myFileHandlerProvider, name: 'my-handler' });
+
+  const fileHandler = FileService.getFileHandlerInstance('my-handler');
+  fileHandler.remove('/resources/files/file01', 'file1', onRemoveCallback());
+}
+```
+</Details>
+
+### `remove`
+
+This method will delegate the `remove` responsibility to the current used `FileHandler`. In the example below, we are using `DefaultFileHandler`, therefore, would remove the given file through a HTTP DELETE using the `FileHandlerConfiguration.removeUrl` and the provided `path` argument that when succesfull calls the `onExecuteRemove` callback.
+
+> You can change the `FileService`'s current handler calling `FileService.setFileHandler(otherHandlerImplementation)` to customize this behavior.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Remove file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    FileService.remove('/resources/files/file01', 'file1', onRemoveCallback());
+  }
+}
+```
+</Details>
+
+### `setFileHandler`
+ 
+Sets the file handler.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Set file handler</code></summary>}>
+```tsx
+function setupFileService(): void {
+  const configuration = new FileHandlerConfiguration();
+  configuration.previewUrl = '/tws-samples/resources/files/preview?path=';
+  configuration.uploadUrl = '/tws-samples/resources/files/upload';
+  configuration.uploadResponseState = HttpStatus.CREATED;
+  configuration.removeUrl = '/tws-samples/resources/files/remove';
+  configuration.removeResponseState = HttpStatus.OK;
+
+  const fileHandler = new DefaultFileHandler();
+  fileHandler.setConfiguration(configuration);
+
+  FileService.setFileHandler(fileHandler);
+}
+```
+</Details>
+
+### `upload`
+
+This method will delegate the `upload` responsibility to the current used `FileHandler`. In the example below, we are using `DefaultFileHandler`, therefore, would upload the given file through a HTTP POST request using the `FileHandlerConfiguration.uploadUrl` and the provided `file`.
+
+> You can change the `FileService`'s current handler calling `FileService.setFileHandler(otherHandlerImplementation)` to customize this behavior.
+
+> **Note**
+>  This method will be deprecated at oswald v7. Further usage should be done by obtaining the handler instance by `FileService.getFileHandlerInstance('handler-provider-name')`.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Upload file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    const file = new File(['(⌐□_□)'], 'image.png', { type: 'image/png' });
+    const events = { onProgress: onProgressCallback() };
+    const maxFileSize = { maxSize: 2, sizeUnit: BytesSizeUnit.MEGABYTES };
+    
+    void fileHandler.upload(file, events, maxFileSize);
+  }
+}
+```
+</Details>

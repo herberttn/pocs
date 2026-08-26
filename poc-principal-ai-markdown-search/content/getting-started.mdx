@@ -1,0 +1,72 @@
+---
+sidebar_position: 1
+---
+
+import Admonition from '@theme/Admonition';
+
+import { VersionToolLink, VersionToolRequirementList } from '@site/src/versions/components';
+import { version as latest } from '@site/src/versions/latest';
+
+# Getting started
+
+## Oswald's packages
+Go through our [GitHub packages authentication](guides/github-packages-authentication.mdx) guide to understand where Oswald's packages are available and how to configure your project to get them.
+After this you can create a project by using other projects as examples, or by creating a new project based on one of our templates.
+
+## Using a template
+You'll need to use the process described in [Configuring `npm` authentication to run standalone commands](guides/github-packages-authentication.mdx#configuring-npm-authentication-to-run-standalone-commands) to authenticate and be able to run the command below, or `npx` won't be able to download Oswald's cli in a directory that is not set up to authenticate with the private registry.
+
+```shell
+npx --package @philips-internal/oswald -- oswald create <template> [...options]
+```
+
+The placeholder `<template>` will have to be replaced by one of the available templates.\
+The placeholder `[...options]` represents the options for the chosen template, which may vary by template type.
+
+> See: [`oswald create`](cli/oswald-create.md) command documentation to choose a template and find its options.
+
+Upon running the command, it will validate the options and ask a series of questions to configure your new project, such as (but not limited to) project name, description, desired location of generated files and supported/default languages/locales.
+
+## Building
+
+### Requirements
+
+Oswald <VersionToolLink of={latest.oswald.version}/> requires the following:
+  <VersionToolRequirementList of={latest.engines} />
+
+We recommended managing them using one of the following tools:
+  - [`fnm`](https://github.com/Schniz/fnm)
+  - [`nvm`](https://github.com/nvm-sh/nvm) / [`nvm-windows`](https://github.com/coreybutler/nvm-windows)
+
+The commands below must be executed in the root directory of the project in order to correctly install the project's dependencies.
+
+### Installing the dependencies
+```shell
+npm ci
+```
+
+### Building the project
+```shell
+npm run build
+```
+
+## Running
+For running your Oswald project, the following commands are available:
+
+### To execute the application in dev mode
+```shell
+npm run dev
+```
+
+### To run the Oswald editor
+```shell
+npm run editor
+```
+
+<Admonition type="note">
+  All fragments of the project will be listed in the editors **Metadata** tab.
+  <figure>![Oswald editor](./../assets/getting-started/editor-login-fragment.png)</figure>
+</Admonition>
+    
+## FAQ
+For questions regarding the framework usage, please refer to [Philips Stack Enterprise](https://philips.stackenterprise.co), under the [oswald](https://philips.stackenterprise.co/questions/tagged/1002) tag.

@@ -1,0 +1,212 @@
+---
+title: Application Lifecycle
+sidebar_label: 5. Application Lifecycle
+sidebar_position: 5
+---
+
+The application lifecycle in Oswald begins similarly to any React application, starting with a `Root` component that is rendered by React. Understanding the application lifecycle is essential for proper initialization, configuration, and ensuring all controllers and resources are registered correctly before the application becomes interactive.
+
+The Oswald application lifecycle consists of several key phases:
+
+1. **Setup Phase**: Import framework packages, controllers, and custom services
+2. **Render Phase**: React renders the Root component containing the Foundation component
+3. **Bootstrap Phase**: Framework loads i18n, fragments, modules, and configuration
+4. **Initialization Phase**: Custom bootstrap logic runs (if provided)
+5. **Ready Phase**: Application becomes interactive for users
+
+### Root Component Setup
+
+The root component is the entry point of the Oswald application and is responsible for:
+
+* Importing all necessary framework packages
+* Importing application controllers, formatters and validators
+* Rendering Oswald's `Foundation` component
+
+#### Required Imports
+
+* **Component Library**: The `@philips-internal/oswald-ui-components` package must be imported so components are registered in the framework's component catalog and can be used in fragments
+* **Framework Controllers**: The `@philips-internal/oswald-ui-fragments/controllers` package must be imported if the application is using one of the built-in framework fragments
+* **Application Controllers**: All application controllers must be imported to register them with [`Odin`](https://github.com/philips-software/odin)
+* **Custom Formatters**: All custom formatters must be imported to register them with Oswald's [`ModelService`](../services/model-service.mdx)
+* **Custom Validators**: All custom validators must be imported to register them with Oswald's [`ModelService`](../services/model-service.mdx)
+
+#### The Foundation Component
+
+The `Foundation` component is the core of the Oswald application and is responsible for:
+
+* Starting the application global context
+* Starting the Router context and loading all registered routes
+* Internally starting Oswald's Rendering Engine for fragments
+* Running bootstrap phases
+
+##### Component Properties
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `bootstrap` | `() => Promise<void>` | ❌ No | Custom bootstrap function for application-specific initialization |
+| `root` | `{ fragmentName: string }` | ❌ No | Name of the root fragment containing application routes and structure |
+
+**Note**: The `root` property can only be omitted if the root fragment is configured through Oswald's [Bootstrap Manager](../editor/managers/bootstrap-manager.mdx).
+
+#### Bootstrap Phase
+
+The `Foundation` component has an internal bootstrap phase that loads the following resources:
+
+* **i18n messages**: Translation files for all of the application supported locales
+* **Fragments**: All application fragments
+* **Registered modules**: Modules created through Oswald's Module Manager
+* **Authentication configuration**: Authentication settings configured through Oswald's [Authentication Manager](../editor/managers/authentication-manager.mdx)
+* **Bootstrap configuration**: Configuration for application bootstrap configured through Oswald's [Bootstrap Manager](../editor/managers/bootstrap-manager.mdx)
+
+##### Custom Bootstrap Function
+
+Developers can provide a custom bootstrap function that runs **after** the framework's internal bootstrap completes. This function should return a `Promise<void>` and can be used for:
+
+* Loading application-specific configuration
+* Initializing third-party services
+* Setting up the application theme
+* Registering global event listeners
+
+**Example**:
+
+```tsx title="src/configuration/bootstrap.ts"
+import { ThemeService, ThemeTonalRange } from '@philips-internal/oswald-ui-components';
+
+async function bootstrap(): Promise<void> {
+  // Configure application theme
+  ThemeService.setContentTonalRange(ThemeTonalRange.LIGHT);
+  ThemeService.setNavigationTonalRange(ThemeTonalRange.DARK);
+
+  // Initialize other services as needed
+  // await someService.initialize();
+}
+
+export {
+  bootstrap,
+};
+```
+
+#### Example Root Component
+
+```tsx title="src/index.tsx"
+import React from 'react';
+import type { ReactElement } from 'react';
+import { createRoot } from 'react-dom/client';
+
+// Import Oswald component library, which registers components in Oswald's catalog
+import '@philips-internal/oswald-ui-components';
+
+// Import pre-built fragments/controllers from framework, if using any of them
+import '@philips-internal/oswald-ui-fragments/controllers';
+
+// Import Oswald's Foundation component
+import { Foundation } from '@philips-internal/oswald-ui-foundation';
+
+// Import custom bootstrap function, if needed
+import { bootstrap } from './configuration/bootstrap.js';
+
+// Import all application controllers to register them with Odin
+import './controllers/index.js';
+
+// Get root container element
+const container = document.getElementById('root');
+
+if (container) {
+  const root = createRoot(container);
+  root.render(<Root />);
+}
+
+function Root(): ReactElement | null {
+  return (
+    <Foundation bootstrap={bootstrap} />
+  );
+}
+```
+
+### Loading Screen
+
+While the bootstrap functions are running and the engine is initializing, the application displays a loading screen. This prevents users from interacting with an incomplete application state and provides visual feedback that the application is starting up.
+
+#### Application Initialization Flow
+
+1. React renders the `Root` component
+2. `Root` renders the `Foundation` component
+3. `Foundation` displays a loading screen
+4. Framework internal bootstrap runs (i18n, fragments, modules, etc.)
+5. Custom bootstrap runs, if provided
+6. Rendering engine initializes
+7. Root fragment is loaded and rendered
+8. Application becomes interactive
+
+### Best Practices
+
+* **Keep Bootstrap Lightweight**: Avoid long-running operations in the bootstrap function. Users will see the loading screen during bootstrap, so this time should be minimized.
+* **Handle Bootstrap Errors**: Wrap bootstrap logic in try-catch blocks to handle initialization failures gracefully:
+
+```tsx
+async function bootstrap(): Promise<void> {
+  try {
+    await initializeServices();
+  } catch (error) {
+    console.error('Bootstrap failed:', error);
+    // Show user-friendly error message or fallback UI
+  }
+}
+```
+
+* **Progressive Loading**: Load only essential data during bootstrap; defer non-critical data loading until after the application is interactive
+* **Import Order Matters**: Ensure controllers are imported before the `Foundation` component renders. Side-effect imports (like controller files) must execute before the Foundation component mounts
+* **Test Bootstrap Logic**: Bootstrap failures can prevent your entire application from loading. Thoroughly test bootstrap functions, especially error cases
+
+### Common Questions
+
+**Q: What happens if the bootstrap function throws an error?**  
+A: If the bootstrap function throws an unhandled error, the application will remain on the loading screen and won't become interactive. Bootstrap logic should always be wrapped in try-catch blocks with appropriate error handling.
+
+**Q: Can the bootstrap function be skipped?**  
+A: Yes. The `bootstrap` property on the `Foundation` component is optional. If there is no application-specific initialization logic, it can be omitted entirely.
+
+**Q: When should the custom bootstrap function be used vs component lifecycle methods?**  
+A: Use the bootstrap function for application-wide initialization that needs to happen before any fragments render (e.g., theme setup, global service initialization). Use component lifecycle methods (`@OnMount`) for component-specific initialization.
+
+**Q: Why is it necessary to import controllers if they aren't used directly?**  
+A: Controller imports are side-effect imports. The act of importing a controller file registers the controller class with Odin's dependency injection system. Without importing them, the decorators won't execute, and controllers won't be registered.
+
+**Q: What is the correct import order in the Root component?**  
+A: Follow this order:
+1. React imports
+2. Component library (`@philips-internal/oswald-ui-components`)
+3. Framework fragments/controllers (if used)
+4. Foundation component
+5. Custom bootstrap function
+6. Application controllers
+
+**Q: Can an application have multiple Root components?**  
+A: No. An Oswald application should have exactly one `Root` component that renders the `Foundation` component. The Foundation manages the entire application lifecycle.
+
+**Q: How long should the loading screen display?**  
+A: The loading screen displays until all bootstrap functions complete and the root fragment is rendered. Keep bootstrap operations lightweight (< 2-3 seconds) for good user experience.
+
+**Q: Can the loading screen be customized?**  
+A: No. The default loading screen is provided by the Foundation component.
+
+**Q: What if data needs to be loaded from an API during bootstrap?**  
+A: Async calls can be made in the bootstrap function, but developers should be mindful of performance. Consider whether the data is truly required before the app becomes interactive, or if it can be loaded lazily after the initial render:
+
+```tsx
+async function bootstrap(): Promise<void> {
+  // Only load critical configuration
+  const config = await fetch('/api/config').then(r => r.json());
+  ConfigService.initialize(config);
+
+  // Non-critical data can be loaded after bootstrap
+  // loadUserPreferences(); // Don't await this
+}
+```
+
+**Q: Is it necessary to import formatters and validators even if they are defined inline?**  
+A: If formatters and validators are defined in separate files, those files must be imported to ensure they're registered with the [`ModelService`](../services/model-service.mdx). Inline definitions within controllers don't require separate imports.
+
+## Related Resources
+* [Component Lifecycle](./component-lifecycle.mdx) - Learn about the component lifecycle
+* [Odin](./odin.mdx) - Learn about Odin

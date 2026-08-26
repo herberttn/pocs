@@ -1,0 +1,273 @@
+---
+title: Segmented Control
+sidebar_label: Segmented Control
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+Oswald provides the `SegmentedControl` component, the main goal of a segmented control is to provide a way to select one or multiple values in a list within a form field through selectable cards. The content within the each card is fully customizable.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `SegmentedControl` a fragment with the components `Layout` and `ContextualBar` will be used.
+
+<figure>
+  ![Initial Tree](./../../../assets/guides/segmented-control/segmented-control-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+### How to use
+
+  1. In the components tab, search for `Form` and drag it into the `ContextualBar` > `content` area. Change the property `alias` to `segmented-form`.
+  <figure>
+  ![Create Form](./../../../assets/guides/segmented-control/segmented-form.gif)
+  <figcaption>Figure 2 - Create Form</figcaption>
+  </figure>
+
+  2. Inside the `segmented-form` include a new `Field` component. 
+  <figure>
+  ![Create Field](./../../../assets/guides/segmented-control/segmented-field.gif)
+  <figcaption>Figure 3 - Create Field</figcaption>
+  </figure>
+
+  2.1 Change the `Field` properties as follow:
+    - `alias` = `segmented-field`
+    - `label` = `user`
+    - `entry` = `user`
+    - `alwaysShowLabel` = true (checked)
+    - `width` = 12
+
+  2.2 Add a `validator`, such as `required`:
+  <figure>
+  ![Create Field Validator](./../../../assets/guides/segmented-control/segmented-field-properties.png)
+  <figcaption>Figure 4 - Create Field Validator</figcaption>
+  </figure>
+  
+
+  3. Add the `Fetch` component inside the `Field` that was created in the step above.
+  <figure>
+  ![Create Fetch](./../../../assets/guides/segmented-control/segmented-fetch.gif)
+  <figcaption>Figure 5 - Create Fetch</figcaption>
+  </figure>
+
+  4. In the properties tab, change the property `alias` to `segmented-fetch` and the property `endpoint` to `/api/users`. This will fetch the users.
+  <figure>
+  ![Fetch Properties](./../../../assets/guides/segmented-control/segmented-fetch-properties.png)
+  <figcaption>Figure 6 - Fetch Properties</figcaption>
+  </figure>
+
+  5. Add the `Mapper` component as a child of the `Fetch` component. Change the property `alias` to `segmented-mapper`.
+  <figure>
+  ![Create Mapper](./../../../assets/guides/segmented-control/segmented-mapper.gif)
+  <figcaption>Figure 7 - Create Mapper</figcaption>
+  </figure>
+
+  6. Change the property `alias` to `segmented-mapper` and configure the `map` property as follow:
+  <figure>
+  ![Mapper Property](./../../../assets/guides/segmented-control/segmented-mapper-properties.png)
+  <figcaption>Figure 8 - Mapper Property</figcaption>
+  </figure>
+
+  <Admonition type="note">
+  For more information about the concept of `Fetch` and `Mapper` components, consider accessing the documentation [Listing cards](./fetch-mapper-deck.mdx).
+  </Admonition>
+
+  7. Now in the components tab, search for `SegmentedControl` and drag it into the `segmented-mapper`.
+  <figure>
+  ![Create Segmented Control](./../../../assets/guides/segmented-control/create-segmented-control.gif)
+  <figcaption>Figure 9 - Create Segmented Control</figcaption>
+  </figure>
+
+  7.1. Change the properties of the `SegmentedControl` component to:
+    - `alias` = `segmented-control`
+    - `alignment` = `initial`
+    - `identifier` = `id`
+    - `theme` = `primary`
+
+  8. It's possible to include an `Avatar` component inside the `SegmentedControl`. In the components tab, search for `Avatar` and drag it into the `SegmentedControl`.
+  <figure>
+  ![Segmented Control Avatar](./../../../assets/guides/segmented-control/segmented-avatar.gif)
+  <figcaption>Figure 10 - Segmented Control Avatar</figcaption>
+  </figure>
+
+  9. To create the controller for the fragment, you can check the [Codegen](./codegen.mdx) guide. But basically:
+  - In the Oswald Metadata tab, select the `fragment.osw` fragment.
+  - Right click and select `Create Controller`.
+
+### Accessing the fragment
+
+To access the fragment, a route `/application/form` was created using Oswald's Route Manager. For instructions on how to use it, refer to the [Route Manager](./routes.mdx).
+When accessing the route the fetch process will execute, and upon receiving the result from the configured endpoint, the `SegmentedControl` will render the mapped data.
+<figure>
+![Segmented Control Application](./../../../assets/guides/segmented-control/segmented-application.gif)
+<figcaption>Figure 11 - Segmented Control Application</figcaption>
+</figure>
+
+When checked the `multiSelect` property of `SegmentedControl` component it's possible select more than one option.
+<figure>
+![Segmented Control Multiselect](./../../../assets/guides/segmented-control/segmented-multiselect.gif)
+<figcaption>Figure 12 - Segmented Control Multiselect</figcaption>
+</figure>
+
+### Adding an `OnChange` event to the SegmentedControl.
+To generate the `OnChange()` event in the controller, use the [Codegen](./codegen.mdx) functions to: 
+		
+-[Add an `OnChange` event listener](./codegen.mdx#adding-event-listeners) and change its content as follow:
+
+```tsx
+  @OnChange(SegmentedControlAliases.SEGMENTED_CONTROL)
+  onDynamicSegmentedControlChange(): void {
+    this.showToast('segmente-control-controller', 'Changed user!');
+  }
+
+  showToast(id: string, action: string): void {
+    ToastService.open({
+      dismissible: true,
+      id,
+      message: action,
+      placement: Placement.BOTTOM,
+      showIcon: true,
+      title: 'OnChange',
+    });
+  }
+```
+
+After implementation we will have the following result:
+<figure>
+![Segmented Control OnChange](./../../../assets/guides/segmented-control/segmented-onchange.gif)
+<figcaption>Figure 13 - Segmented Control OnChange</figcaption>
+</figure>
+
+### Source Code
+<Details summary={<summary>SegmentedControl Fragment: <code>segmented-control.osw</code> </summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-segmented",
+      "uuid": "4eb99d44-5fa3-4340-bedb-efd65a61ff87",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "ContextualBar",
+        "props": {
+          "alias": "contextual-bar-segmented",
+          "uuid": "d279f59c-c8c5-4e4d-b9c2-beef7c2d985b",
+          "slot": "content",
+          "title": "Segmented Control"
+        },
+        "children": [
+          {
+            "type": "Form",
+            "props": {
+              "alias": "segmented-form",
+              "uuid": "e902bd8a-e58d-4a74-800a-13bdbcf2b748",
+              "slot": "content"
+            },
+            "children": [
+              {
+                "type": "Field",
+                "props": {
+                  "alias": "segmented-field",
+                  "uuid": "a6cd8ae6-d044-4276-a611-109932e59a5f",
+                  "alwaysShowLabel": true,
+                  "label": "User",
+                  "validators": [
+                    {
+                      "name": "required",
+                      "options": {}
+                    }
+                  ],
+                  "width": 12,
+                  "entry": "user"
+                },
+                "children": [
+                  {
+                    "type": "Fetch",
+                    "props": {
+                      "alias": "segmented-fetch",
+                      "uuid": "fcfaecc4-bbbd-424c-ba22-78865db3928e",
+                      "endpoint": "/api/users"
+                    },
+                    "children": [
+                      {
+                        "type": "Mapper",
+                        "props": {
+                          "alias": "segmented-mapper",
+                          "uuid": "b1f378cd-780a-4578-97d4-d37ed537e2fc",
+                          "map": {
+                            "title": "name",
+                            "subtitle": "role.description"
+                          },
+                          "component": ""
+                        },
+                        "children": [
+                          {
+                            "type": "SegmentedControl",
+                            "props": {
+                              "alias": "segmented-control",
+                              "uuid": "3d9bb2c0-8332-4475-a564-e9377a46920e",
+                              "alignment": "initial",
+                              "multiSelect": true,
+                              "identifier": "id",
+                              "theme": "primary"
+                            },
+                            "children": [
+                              {
+                                "type": "Avatar",
+                                "props": {
+                                  "alias": "avatar-segmented",
+                                  "uuid": "2c828c75-9d96-47cf-b5b9-af478a5fc16e",
+                                  "@repeated": true
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "segmented-control"
+}
+```
+</Details>
+<Details summary={<summary>SegmentedControl Controller: <code>segmented-control-controller.ts</code> </summary>}>
+```tsx
+import Controller, { OnChange } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ToastService } from '@philips-internal/oswald-ui-components';
+import { FragmentNames, SegmentedControlAliases } from '../../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.SEGMENTED_CONTROL })
+export default class SegmentedControlController {   
+  @OnChange(SegmentedControlAliases.SEGMENTED_CONTROL)
+  onDynamicSegmentedControlChange(): void {
+    this.showToast('segmented-control-controller', 'Changed user!');
+  }
+
+  showToast(id: string, action: string): void {
+    ToastService.open({
+      dismissible: true,
+      id,
+      message: action,
+      placement: undefined,
+      showIcon: true,
+      title: 'OnChange',
+    });
+  }
+}
+```
+</Details>

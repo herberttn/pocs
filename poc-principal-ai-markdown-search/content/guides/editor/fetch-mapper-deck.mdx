@@ -1,0 +1,122 @@
+---
+title: Listing cards
+sidebar_label: Listing cards
+---
+
+This guide will show how to easily create a list of cards that are fetched from a backend using a composition of Oswald components, `Fetch`, `Mapper`, `Deck` and `CardContainer`.
+
+### Configuring the fragment
+
+For this guide, a `Layout`, a `ContextualBar` and a `Panel` will be created in its `content` slot.
+
+<figure>
+   ![Fragment tree](./../../../assets/guides/fetch-mapper-deck/fetch-frament-tree.png)
+   <figcaption>Figure 1 - Fragment tree</figcaption>
+</figure>
+
+### How to use
+
+#### Adding Fetch component
+
+The `Fetch` component exists as a wrapper for other components, making a request to an endpoint, and then relaying the data obtained to its children components.
+
+Add the `Fetch` component inside the `Panel` that was created in the step above.
+
+<figure>
+   ![Fetch component](./../../../assets/guides/fetch-mapper-deck/fetch-tree.png)
+   <figcaption>Figure 2 - Fetch component</figcaption>
+</figure>
+
+  - In the `endpoint` property, define the URL path to which the request will be made.
+<figure>
+   ![Fetch properties definition](./../../../assets/guides/fetch-mapper-deck/fetch-properties-definition.png)
+   <figcaption>Figure 3 - Fetch properties definition</figcaption>
+</figure>
+
+
+#### Adding Mapper component
+
+The `Mapper` components exists so data received through the component properties can be mapped to a format understandable by the `Mapper` component children.
+Add the `Mapper` component as a child of the `Fetch` component.
+The data returned by the `Fetch` component configured in the previous step is in the following format:
+```json
+[
+   {
+      "id":"1",
+      "location":"Blumenau, SC. Brazil",
+      "name":"DevOps"
+   },
+   {
+      "id":"2",
+      "location":"Blumenau, SC. Brazil",
+      "name":"Infrastructure"
+   }
+]
+```
+With this the `Mapper` component can map the received properties to a format accepted by a children component such as the `CardContainer` used in this guide.
+
+<figure>
+   ![Map properties example](./../../../assets/guides/fetch-mapper-deck/mapper-map-properties.png)
+   <figcaption>Figure 4 - Map properties example</figcaption>
+</figure>
+
+#### Adding Deck component
+
+The `Deck` component is responsible for propagating the data it receives to its children, individually, so each element has the correct properties. It also provides several properties to customize the visualization of its content.   
+Add the `Deck` component as a child of the `Mapper` component.
+
+<figure>
+   ![Deck tree](./../../../assets/guides/fetch-mapper-deck/deck-tree.png)
+   <figcaption>Figure 5 - Deck Tree</figcaption>
+</figure>
+
+Within the properties of the component there are some related to its children display options, such as `grouping`, `pagination`, etc. For this guide we will use `vertical` in the `orientation` property, so our cards appear as a list.
+A very important property is *`keyField`*, which uses `id` by default, and is used to denote the property that is used to determine each item uniqueness.  
+
+##### Virtualized List
+When a list contains a large number of records, virtualized listing can be used to increase performance. Virtualization renders only the items that will be displayed on the screen. As the list is scrolled through, the items are rendered, and the items that are not being displayed are removed from the DOM.
+
+<figure>
+   ![Virtualization properties](./../../../assets/guides/fetch-mapper-deck/deck-virtualization-props.png)
+   <figcaption>Figure 6 - Virtualization properties</figcaption>
+</figure>
+
+   - `virtualHeight`: Defines the height of the list, for a virtualized list it is necessary to define a fixed height for the list.
+   - `virtualRowSize`: Defines the height of each item in the list, this definition is important because virtualization calculates the size of the item with the size of the listing that was defined in the property `VirtualHeight`.
+
+#### Adding CardContainer component
+
+Add the `CardContainer` component as a child of the `Deck` component. For instructions on how to use it, refer to the [`CardContainer` guide](./card-container.mdx).   
+For this list, a `CardContainer` with a `CardContainerBody` and two `CardContainerZone` will be used to display the data.
+   - Add a `CardContainerBody`
+   - Add two `CardContainerZone`.
+   - Change the `size` property to 100 for each `CardContainer` zone.
+   - Add the `Field` component for each `ContainerZone`.
+   - Add `Text` component to each `Field` component.
+
+
+<figure>
+   ![CardContainer tree](./../../../assets/guides/fetch-mapper-deck/card-container-zone-tree.png)
+   <figcaption>Figure 6 - CardContainer tree</figcaption>
+</figure>
+
+#### Mapping the Field component
+
+The `Field` component will be responsible for receiving the data mapped within the `Mapper` component, in this guide 2 mappings are defined, `operation` and `city`.
+   - Select the first `Field` and go to the `entry` property and add the value `operation`.
+   - Select the second `Field` and go to the `entry` property and add the value `city`.
+ 
+<figure>
+   ![Defining the entry property of the Field component](./../../../assets/guides/fetch-mapper-deck/field-entry-properties.gif)
+   <figcaption>Figure 7 - Defining the entry property of the Field component</figcaption>
+</figure>
+
+### Accessing the fragment
+
+To access the fragment, a route `/fetch-mapper` was created using Oswald's Route Manager. For instructions on how to use it, refer to the [Route Manager](./routes.mdx).
+When accessing the route the fetch process will execute, and upon receiving the result from the configured endpoint, the `Mapper` and `Deck` components will render their contents, listing the mapped data for each individual card.
+
+<figure>
+   ![Result of using deck, mapper, fetch](./../../../assets/guides/fetch-mapper-deck/fetch-mapper-deck-results.gif)
+   <figcaption>Figure 8 - Result of using the deck, mapper, fetch</figcaption>
+</figure>

@@ -1,0 +1,67 @@
+---
+title: Modules
+sidebar_label: Modules
+---
+
+Oswald, with the aim of security and access definitions, presents a Module control feature. Through the modules it is possible to define which layers the user can have within the application and which routes the user can access when logged in.
+
+This guide shows how to manage application modules through Oswald's Module Manager, facilitating their registry and configuration.
+
+### How to use
+
+To create a new module, or group, a route created through [Oswald's Route Manager](./routes.mdx) must already exist within the project.
+
+To open the Module Manager click on the `Opens the module Manager` action.
+
+<figure>
+   ![Open module manager](./../../../assets/guides/modules/module-manager.png)
+   <figcaption>Figure 1 - Open module manager</figcaption>
+</figure>
+
+When opening the Module Manager the modules already configured in the application will be displayed. It is possible to create a module or a group of modules.
+
+### Creating a module
+ 
+  1. In the Module Manager click on the `NEW MODULE` button.
+  2. A registration form will be shown containing the fields necessary for creating a module. For this guide a module called `Example Module` will be created.
+   - `Entry`: Module entry. It's recommended to separate the entry pieces with the `-` char. e.g: `module-example`.
+   - `Id`: Module identifier, in this case we will use `module-example`;
+   - `Name`: Name that will be displayed within the application. It's recommended to use an expression for the module name, forcing its to respect the expression respective translations.
+   - `Icon`: Optional icon displayed alongside the module.
+   - `Order`: Optional property denoting the order in which the module will be displayed in module lists.
+   - `Route`: Route from which the module will be accessed.
+   - `Main Route`: Intended for modules which have multiple first-level routes, for example `/example/a` and `example/b`. This field allows the selection of which route should be navigated when accessing the module, in this case.
+   - `Closeable`: Defines whether the module shows an close icon within its display on the `ApplicationBar` component.
+
+<figure>
+   ![Creating a new module](./../../../assets/guides/modules/new-module.png)
+   <figcaption>Figure 2 - Creating a new module</figcaption>
+</figure>
+
+### Creating group of modules
+
+A module group is responsible for groping modules based on their context, improving organization within applications. Similar to creating a single module, this will also present a registration form with the following fields:
+   - `entry`: Module entry, by default always use `-` to separate words. ex: `example-module-group`
+   - `id`: Module identifier, in this case we will use `example-module-group`;
+   - `name`: Name that will be displayed within the application, as a good practice, use expression for the module name, this way, when the application language is changed, the module name will also respect the expression that was registered.
+   - `order`: Optional property denoting the order in which the module will be displayed in module lists.
+
+<figure>
+   ![Creating a new module group](./../../../assets/guides/modules/new-module-group.png)
+   <figcaption>Figure 3 - Creating a new module group</figcaption>
+</figure>
+
+After saving, on the module manager screen, a new item will be created:
+
+<figure>
+   ![Group item](./../../../assets/guides/modules/manager-group-item.png)
+   <figcaption>Figure 4 - Group item</figcaption>
+</figure>
+
+When you click, a new window will open with module options such as editing, removing and creating a module, clicking on the `NEW MODULE` button will open the module registration screen, the creation process is the same as the steps above.
+
+When adding the submodule, the selected group will display the new registered module.
+<figure>
+   ![Group module items](./../../../assets/guides/modules/group-module-items.png)
+   <figcaption>Figure 5 - Group module items</figcaption>
+</figure>

@@ -1,0 +1,99 @@
+---
+title: ThemeCustomizer
+sidebar_label: ThemeCustomizer
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+import customizingThemeVideo from './../../../assets/guides/theme-customizer/customizing-theme.mp4';
+
+For scenarios where the default theme does not meet the application's requirements, Oswald provides a [ThemeCustomizer](../../components/theme-customizer.mdx) component. This component allows users to customize the appearance of a web application, creating unique themes that reflect the brand identity of the application.
+
+### Requirements
+
+This component requires a backend service to store the theme settings. The backend service should provide an API to save, retrieve and delete the theme settings.
+
+How to configure the paths will be explained in the following sections, this is just a brief overview of what is needed with sample paths:
+
+- `POST /api/save-theme/{themeId}`: This endpoint should save the theme settings for the specified theme ID. Also being responsible for creating a css file with the values provided by the request, and ideally returning the path to the css file to be applied after it is created.
+- `GET /api/theme-variables/{themeId}`: This endpoint should return an array of objects with the theme settings for the specified theme ID.
+- `DELETE /api/delete-theme/{themeId}`: This endpoint should delete the theme settings and css file for the specified theme ID.
+
+### How to use
+
+  1. In the [oswaldrc.json](../../configuration/oswaldrc.md) file, configure the [customization](../../configuration/oswaldrc.md#customization) property with the custom theme endpoints described in the requirements.
+
+  2. Still in the [oswaldrc.json](../../configuration/oswaldrc.md) file, add `@philips-internal/oswald-ui-fragments` under the properties `dependencies.fragment` and `dependencies.messages`. This will import the default theme customizer fragment and controller, allowing it to be used within your project.
+
+      ```json5
+      {
+        // ...
+        "customization": {
+          "deleteThemeEndpoint": "/api/delete-theme/{themeId}",
+          "getThemeVariablesEndpoint": "/api/theme-variables/{themeId}",
+          "saveThemeEndpoint": "/api/save-theme/{themeId}",
+        },
+        "dependencies": {
+          // ...
+          "fragments": [
+            "@philips-internal/oswald-ui-fragments",
+          ],
+          "messages": [
+            "@philips-internal/oswald-ui-components",
+            "@philips-internal/oswald-ui-foundation",
+            "@philips-internal/oswald-ui-fragments",
+          ],
+        },
+        // ...
+      }
+      ```
+
+  3. Open the editor, in the `Metadata` tab, you should see the `osw-theme-customizer` fragment listed after the fragments of your project.
+
+  <figure>
+    ![Oswald theme customizer fragment](./../../../assets/guides/theme-customizer/osw-theme-fragment.png)
+    <figcaption>Figure 1 - Oswald theme customizer fragment</figcaption>
+  </figure>
+
+  4. Include the `osw-theme-customizer` fragment in your application by assigning it to a [route](./routes.mdx#using-route-management) or by referencing it inside an existing fragment using the `FragmentReference` component.
+
+  5. In the application bootstrap, import Oswald's `ThemeService` to register and apply the custom theme if it exists. For example:
+
+      ```tsx
+      import { ThemeService } from '@philips-internal/oswald-ui-components';
+      import { HttpService } from '@philips-internal/oswald-ui-core/services';
+      
+      interface CustomTheme {
+        id: string;
+        url: string;
+      }
+    
+      const response = await HttpService.get<CustomTheme>('/some-api-endpoint');
+      const theme = response.body;
+      
+      if (theme?.id) {
+        ThemeService.registerCustomTheme(theme.id, theme.url);
+        await ThemeService.applyCustomTheme(theme.id);
+      }
+      ```
+
+  6. Access the application and navigate to the route where the `osw-theme-customizer` fragment is located. You should see the theme customizer component.
+
+  <figure>
+    ![Theme customizer](./../../../assets/guides/theme-customizer/theme-customizer.png)
+    <figcaption>Figure 2 - Theme customizer</figcaption>
+  </figure>
+
+  7. To start customizing the theme, select a component in the dropdown list and change the values of the css variables. After customizing the theme, click the `Save` button to save the changes.
+
+<figure>
+  <video controls width="100%">
+    <source src={customizingThemeVideo}/>
+  </video>
+  <figcaption>Figure 3 - Customizing the application theme</figcaption>
+</figure>
+
+<Admonition type="note">
+  In this example, the theme is applied right after saving because the path to the css file is returned by the demo backend as a response to the POST request to save the theme. If the path is not returned, the theme will only be applied after the page is reloaded (assuming step 5 was correctly implemented).
+</Admonition>

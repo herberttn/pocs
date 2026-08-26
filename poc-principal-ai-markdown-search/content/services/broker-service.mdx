@@ -1,0 +1,207 @@
+---
+sidebar_label: BrokerService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `BrokerService`
+
+The `BrokerService` provides a publish-subscribe messaging pattern for application-wide event communication. It enables loosely coupled components to communicate by publishing messages to topics and subscribing to receive notifications when messages are published.
+
+The service operates through a simple pub-sub pattern:
+
+- **Topics**: Named channels for message communication (string identifiers like `'user-logged-in'`, `'data-updated'`)
+- **Publishers**: Components that send messages to a topic using `publishToTopic`
+- **Subscribers**: Components that listen for messages on a topic using `subscribeToTopic`
+
+<Admonition type="info">
+The `BrokerService` is available globally and does not require initialization.
+</Admonition>
+
+## Methods
+
+### `subscribeToTopic`
+
+Subscribe to a topic to be notified when messages are published to it. Returns an unsubscribe function to remove the listener.
+
+**Parameters:**
+- `topic` (string): The topic to be subscribed
+- `listener` (function): The function that will be called when a message is published to the topic
+
+**Returns:** Function to unsubscribe the listener from the topic
+
+**Throws:** Error if the same listener is already subscribed to the topic
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { BrokerService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+interface UserMessage {
+  userId: string;
+}
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.unsubscribe = BrokerService.subscribeToTopic('topic', (message) => {
+      console.log('message', message);
+    });
+
+    // With typed messages
+    this.unsubscribe = BrokerService.subscribeToTopic<UserMessage>(
+      'user-updated',
+      (message) => {
+        console.log('User ID:', message.userId);
+      }
+    );
+  }
+
+  @OnUnmount(MyFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+}
+```
+</Details>
+
+<Admonition type="warning">
+Always unsubscribe from topics when the component unmounts to prevent memory leaks.
+</Admonition>
+
+<Admonition type="caution">
+Attempting to subscribe the same listener function to the same topic twice will throw an error.
+</Admonition>
+
+### `publishToTopic`
+
+Publish a message to a topic. All subscribed listeners will be notified immediately with the message.
+
+**Parameters:**
+- `topic` (string): The topic to be notified
+- `message` (T, optional): The message to be sent
+
+**Returns:** void
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { BrokerService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnClick(MyFragmentAliases.SAVE_BUTTON)
+  onSaveClick(): void {
+    BrokerService.publishToTopic('topic', {
+      hello: 'world',
+    });
+
+    // With typed message
+    BrokerService.publishToTopic<{ count: number }>('item-added', {
+      count: 42,
+    });
+
+    // Without message data
+    BrokerService.publishToTopic('save-clicked');
+  }
+}
+```
+</Details>
+
+<Admonition type="note">
+If no listeners are subscribed to the topic, the message is silently ignored.
+</Admonition>
+
+## Best Practices
+
+- **Use descriptive topic names**: Choose clear, semantic topic names like `'user-logged-in'` or `'data-saved'` rather than generic names
+- **Always unsubscribe**: Clean up subscriptions in the `@OnUnmount` lifecycle method to prevent memory leaks
+- **Type your messages**: Use TypeScript generics to type your messages for better type safety
+- **Keep messages immutable**: Avoid modifying message objects in subscribers; treat them as read-only
+- **Avoid circular dependencies**: Be careful not to create circular event chains where topic A triggers topic B which triggers topic A
+- **Use arrow functions for listeners**: When using class methods as listeners, use arrow functions to preserve `this` context
+
+## Common Patterns
+
+### Cross-Fragment Communication
+
+```tsx
+import { BrokerService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+// Fragment A - Publisher
+@Controller({ fragment: FragmentNames.FORM_FRAGMENT })
+class FormFragmentController {
+  @OnClick(FormFragmentAliases.SUBMIT_BUTTON)
+  onSubmit(): void {
+    const formData = this.getFormData();
+
+    BrokerService.publishToTopic('form-submitted', {
+      data: formData,
+      timestamp: Date.now(),
+    });
+  }
+}
+
+// Fragment B - Subscriber
+@Controller({ fragment: FragmentNames.SUMMARY_FRAGMENT })
+class SummaryFragmentController {
+  declare unsubscribe: () => void;
+
+  @OnMount(SummaryFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.unsubscribe = BrokerService.subscribeToTopic('form-submitted', (message) => {
+      this.updateSummary(message.data);
+    });
+  }
+
+  @OnUnmount(SummaryFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    this.unsubscribe();
+  }
+
+  updateSummary(data: any): void {
+    // Update summary display
+  }
+}
+```
+
+### Managing Multiple Subscriptions
+
+```tsx
+import { BrokerService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  declare unsubscribers: Array<() => void>;
+
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.unsubscribers = [
+      BrokerService.subscribeToTopic('topic-one', this.handleTopicOne),
+      BrokerService.subscribeToTopic('topic-two', this.handleTopicTwo),
+      BrokerService.subscribeToTopic('topic-three', this.handleTopicThree),
+    ];
+  }
+
+  @OnUnmount(MyFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    this.unsubscribers.forEach(unsubscribe => unsubscribe());
+  }
+
+  handleTopicOne = (message: any): void => {
+    console.log('Topic one:', message);
+  };
+
+  handleTopicTwo = (message: any): void => {
+    console.log('Topic two:', message);
+  };
+
+  handleTopicThree = (message: any): void => {
+    console.log('Topic three:', message);
+  };
+}
+```

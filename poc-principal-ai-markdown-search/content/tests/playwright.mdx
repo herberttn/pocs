@@ -1,0 +1,140 @@
+---
+sidebar_label: Playwright
+---
+
+import Admonition from '@theme/Admonition';
+
+# Playwright tests
+End-to-end testing in web development refers to the practice of testing an application from start to finish, simulating the way a user would interact with it. The goal of end-to-end testing is to catch integration and functional bugs, ensure that the different components of the application work together as intended, and to make sure that the application behaves correctly in a production-like environment.
+
+End-to-end tests are different from unit tests in that they test the entire application and its various components, rather than just individual units of code. They are typically written by developers and/or QA engineers, and are run less frequently than unit tests.
+
+End-to-end testing can be time-consuming and resource-intensive, but it is an important part of the software development process. It helps to ensure that the application works correctly and that new features don't break existing functionality.
+
+An important thing to keep in mind when doing end-to-end testing that it should not be treated as a replacement of unit testing, rather it should be complementary to it. end-to-end testing makes sure that the whole system behaves correctly, while unit testing focuses on individual functions and components.
+
+## Requirements
+- Install playwright
+- Test files location have to match `test/**/*.test-playwright.{js,mjs,ts,mts,jsx,tsx}`
+
+### Installing playwright
+Since not everyone will use playwright and its installation is not exactly the most reliable, we made it opt-in. So, to use playwright with Oswald, it needs to be installed in the same place as `@philips-internal/oswald`:
+```shell
+npm install @playwright/test --save-dev
+```
+
+Then, we recommend adding a `postinstall` script to your `package.json` with the command `npx playwright install --with-deps` to install the necessary browsers and dependencies:
+```shell
+npm pkg set 'scripts.postinstall'='npx playwright install --with-deps'
+```
+
+<Admonition type="warning">
+  If not installed, running [`oswald test playwright`](../cli/oswald-test.md#oswald-test-playwright) will fail.
+</Admonition>
+
+## Running tests
+Oswald provides a build-in playwright tests runner, which leverages Oswald's builder, [`vite`](https://www.npmjs.com/package/vite) and [`playwright`](https://www.npmjs.com/package/playwright). The goal is to lower the entry barrier to end-to-end testing, by providing a way to run tests without any setup and configuration.
+
+The command to run playwright tests is built into Oswald's cli.
+> See: [`oswald test playwright`](../cli/oswald-test.md#oswald-test-playwright) for arguments and examples.
+
+## Writing tests
+In this example, the file location is `test/root.test-playwright.tsx`
+
+```tsx
+import { expect, test } from '@philips-internal/oswald-tooling-tests/playwright';
+
+test.describe('application', () => {
+  test('render root page with correct title', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveTitle(/Oswald/);
+  });
+});
+```
+
+### Selecting components by alias
+When using Oswald components through its editor, each component is attributed an alias, which can be used to inject component's APIs or listen to events in [controllers](../basics/controllers.mdx).
+
+The same alias can be used to find fragment rendered components during tests, through the [`page.getByTestId(alias)`](https://playwright.dev/docs/api/class-page#page-get-by-test-id) function, which is automatically configured by Oswald when running in an end-to-end testing environment.
+
+```tsx
+import { expect, test } from '@philips-internal/oswald-tooling-tests/playwright';
+
+import { MyControllerAliases } from '../src/codegen/index.js';
+
+test.describe('...', () => {
+  test('...', async ({ page }) => {
+    await page.goto(...);
+    await page.getByTestId(MyControllerAliases.COMPONENT_ALIAS).click();
+    await expect(...).to...
+  });
+});
+```
+
+### Internationalization (i18n) with Translator
+Oswald provides a built-in translator fixture that allows you to translate message keys and test your application in different languages. The translator is automatically initialized when you use it in your tests, loading all available message property files from your Oswald configuration.
+
+The translator is available as a fixture in your test functions and provides the following methods:
+
+- **`translate`**: Resolves a message key to its localized string. Falls back to the key itself when no translation is found. Supports template interpolation with optional arguments.
+- **`setLanguage`**: Changes the active language used by `translate`. The default language is defined by the [oswaldrc.json `defaultLanguage`](../configuration/oswaldrc.md#i18nlanguagesdefaultlanguage) or the current browser locale.
+
+#### Basic usage
+```tsx
+import { expect, test } from '@philips-internal/oswald-tooling-tests/playwright';
+
+test.describe('My feature', () => {
+  test('should display translated text', async ({ page, translator }) => {
+    await page.goto('/');
+    
+    await expect(page.getByRole('button', { name: translator.translate('tws.button.submit') })).toBeVisible();
+  });
+});
+```
+
+#### Setting the language
+You can change the active language for a test or test suite by changing the browser locale or by calling the `translator.setLanguage` method:
+
+```tsx
+import { expect, test } from '@philips-internal/oswald-tooling-tests/playwright';
+
+test.use({ locale: 'pt-br' });
+
+test.describe('Spotlight', () => {
+  test.beforeEach(async ({ translator }) => {
+    translator.setLanguage('pt-br');
+  });
+
+  test('should render with Portuguese labels', async ({ page, translator }) => {
+    await page.goto('/');
+    
+    const element = await page.getByRole('menu', { 
+      name: translator.translate('tws.spotlight.label') 
+    });
+    
+    await expect(element).toBeVisible();
+  });
+});
+```
+
+## Configuration
+It's possible (and **optional**) to extend Oswald's default playwright configuration.
+
+To do that you can create a `playwright.config.ts` file in your application directory, which **needs** to call Oswald's `defineConfiguration` method:
+
+```tsx
+import { defineConfiguration } from '@philips-internal/oswald-tooling-tests/playwright';
+
+export default defineConfiguration({
+  // ...
+});
+```
+
+<Admonition type="note">
+  Not all options can be overridden.
+</Admonition>
+
+### VSCode extension
+To use the [Playwright Test for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) extension, the following are **required**:
+- The [configuration](#configuration) file is present
+- The application is running

@@ -1,0 +1,309 @@
+---
+title: SubmittableFragmentContext
+sidebar_label: SubmittableFragmentContext
+---
+
+The `SubmittableFragmentContext` manages submit and cancel event listeners for submittable fragments. This context allows parent fragments to listen to submission events from child fragments, enabling form handling and data flow between nested components.
+
+`SubmittableFragmentContext` provides a simple event system where child fragments can trigger submit or cancel events, and parent fragments can react to these events appropriately.
+
+### Injection
+
+Inject the `SubmittableFragmentContext` into your controllers using the `@Inject` decorator:
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import type { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  @OnClick(MyFragmentAliases.CANCEL_BUTTON)
+  onCancelClick(): void {
+    const event = new SubmitEvent({ record: {} });
+    this.submittableFragment.cancel(event);
+  }
+}
+```
+
+### Methods
+
+#### `addSubmitListener`
+
+Registers a listener function that will be called when the fragment is submitted.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import type { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.unsubscribe = this.submittableFragment.addSubmitListener((event: SubmitEvent) => {
+      console.log('Form submitted:', event.record);
+      console.log('Pretty record:', event.prettyRecord);
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.unsubscribe();
+  }
+}
+```
+
+#### `addCancelListener`
+
+Registers a listener function that will be called when the fragment is cancelled.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import type { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.unsubscribe = this.submittableFragment.addCancelListener((event: SubmitEvent) => {
+      console.log('Form cancelled:', event.record);
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.unsubscribe();
+  }
+}
+```
+
+#### `submit`
+
+Triggers all registered submit listeners with the provided event.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  onSubmitClick(): void {
+    const event = new SubmitEvent({
+      record: { name: 'John', email: 'john@example.com' },
+      prettyRecord: { name: 'John', email: 'john@example.com' }
+    });
+
+    this.submittableFragment.submit(event);
+  }
+}
+```
+
+#### `cancel`
+
+Triggers all registered cancel listeners with the provided event.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  @OnClick(MyFragmentAliases.CANCEL_BUTTON)
+  onCancelClick(): void {
+    const event = new SubmitEvent({ record: {} });
+    this.submittableFragment.cancel(event);
+  }
+}
+```
+
+#### `destroy`
+
+Cleans up all listeners (both submit and cancel). Should be called when the context is no longer needed.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  @OnUnmount(MyFragmentAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.submittableFragment.destroy();
+  }
+}
+```
+
+### Usage Examples
+
+#### Listening to Form Submit Events
+
+A parent controller can listen to form submission events from child Form components:
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import type { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, UserManagementAliases } from '../codegen/index.js';
+
+// Parent controller listens to Form submissions
+@Controller({ fragment: FragmentNames.USER_MANAGEMENT })
+class UserManagementController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragment: SubmittableFragmentContext;
+
+  declare unsubscribeSubmit: () => void;
+  declare unsubscribeCancel: () => void;
+
+  @OnMount(UserManagementAliases.LAYOUT)
+  onLayoutMount(): void {
+    // Listen for form submissions
+    this.unsubscribeSubmit = this.submittableFragment.addSubmitListener((event: SubmitEvent) => {
+      console.log('User form submitted:', event.record);
+      this.saveUserData(event.record);
+    });
+
+    // Listen for form cancellations
+    this.unsubscribeCancel = this.submittableFragment.addCancelListener((event: SubmitEvent) => {
+      console.log('User form cancelled');
+      this.resetForm();
+    });
+  }
+
+  @OnUnmount(UserManagementAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.unsubscribeSubmit();
+    this.unsubscribeCancel();
+  }
+
+  private saveUserData(data: Record<string, any>): void {
+    // Save user data to backend
+    fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  }
+
+  private resetForm(): void {
+    console.log('Resetting form state');
+  }
+}
+```
+
+#### Department Selection from Table/Deck
+
+This example shows submitting selected data from either a Table or Deck component depending on screen size:
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import type { DeckAPI, TableAPI } from '@philips-internal/oswald-ui-components';
+import { Breakpoint } from '@philips-internal/oswald-ui-constants';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+import { SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { getBreakpoint } from '@philips-internal/oswald-ui-utils';
+
+import { DepartmentLocatorAliases, FragmentNames } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.DEPARTMENT_LOCATOR })
+class DepartmentLocatorController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragmentContext: SubmittableFragmentContext;
+
+  @Inject(DepartmentLocatorAliases.DEPARTMENTS_TABLE)
+  declare departmentsTable: TableAPI;
+
+  @Inject(DepartmentLocatorAliases.DEPARTMENTS_DECK)
+  declare departmentsDeck: DeckAPI;
+
+  @OnClick(DepartmentLocatorAliases.SELECT_BUTTON)
+  onSelectButtonClick(): void {
+    const breakpoint = getBreakpoint();
+    const mobileBreakpoints = [Breakpoint.SM, Breakpoint.XSM];
+    const isMobile = mobileBreakpoints.includes(breakpoint);
+
+    // Get selected item from either Deck (mobile) or Table (desktop)
+    const selectedRecord = isMobile
+      ? this.departmentsDeck.getSelectedCards()[0]
+      : this.departmentsTable.getSelectedRows()[0];
+
+    if (selectedRecord) {
+      // Submit the selected department to parent
+      this.submittableFragmentContext.submit(new SubmitEvent({
+        record: selectedRecord
+      }));
+    }
+  }
+}
+```

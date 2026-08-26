@@ -23,9 +23,10 @@ await searchEngine.indexFiles({
   indexChunks: true, // Index individual code blocks, tables, etc.
 });
 
-const results = await searchEngine.search('playwright vitest');
+const results = await searchEngine.search('component lifecycle');
 
 results.forEach(result => {
   console.log();
   console.log(result);
+  console.log(result.matches);
 });

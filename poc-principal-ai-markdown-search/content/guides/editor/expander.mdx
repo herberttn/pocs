@@ -1,0 +1,243 @@
+---
+title: Expander
+sidebar_label: Expander
+---
+
+import Details from '@theme/Details';
+
+The Expander component allows you to show/hide content when it is clicked. This guide will create a simple Expander with content inside the fixed area and the expandable area of the component.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `Expander` a fragment with the components `Layout` and `Panel` will be used.  
+
+<figure>
+  ![Initial Tree](./../../../assets/guides/expander/expander-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+After creating the basic layout, create a `card-container` following the documentation of how to [create a card container](./card-container.mdx), with three components: `CardContainerHeader`, `CardContainerSeparator` and `CardContainerBody`.
+
+The following structure is displayed in the Tree tab.
+  <figure>
+  ![CardContainer Tree](./../../../assets/guides/expander/expander-card-container-tree.png)
+  <figcaption>Figure 2 - CardContainer Tree</figcaption>
+  </figure>
+
+### How to use
+
+   1. In the components tab, search for `Expander` and drag it into the `CardContainerBody`.
+  <figure>
+  ![Create a Expander](./../../../assets/guides/expander/expander-create.gif)
+  <figcaption>Figure 3 - Create a Expander</figcaption>
+  </figure>
+
+  2. Select the `Properties` tab, you will be presented with all the properties that the `Expander` component contains, change the property `alias` to `main-expander`.
+
+  3. In the components tab, search for `CardContainerZone` and drag it into the `Expander` > `expander-content` area. The content in this area will be always visible.
+  <figure>
+  ![Create a CardContainerZone](./../../../assets/guides/expander/expander-containerzone.gif)
+  <figcaption>Figure 4 - Create a CardContainerZone</figcaption>
+  </figure>
+
+  4. Add 2 other components, a `Field` into the `CardContainerZone` and a `Text` component inside the new `Field`. Select the `Properties` tab an change the properties as follow:
+     <p>Field:</p>
+     - `alias`: `bio-field`
+     - `width`: `12`.
+     
+     <p>Text:</p>
+     - `alias`: `bio-text`
+     - `value`: as you need.
+    
+    <figure>
+    ![Create a Field](./../../../assets/guides/expander/expander-field.png)
+    <figcaption>Figure 5 - Create a Field</figcaption>
+    </figure>
+
+  5. Now in the `Expander` > `expander-expandable-content` area, include a new `CardContainerZone` with a new `Field` and `Text` components inside. The content inside the `expander-expandable-content` could be shown or hidden.
+    <figure>
+    ![Create a new ContainerZone](./../../../assets/guides/expander/expander-containerzone-expandable.gif)
+    <figcaption>Figure 6 - Create a new ContainerZone</figcaption>
+    </figure>
+              
+    <figure>
+    ![ContainerZone on expandable area](./../../../assets/guides/expander/expander-expandable-tree.png)
+    <figcaption>Figure 7 - ContainerZone on expandable area</figcaption>
+    </figure>
+  
+  6. Change the `CardContainerZone` property `alias` for `card-container-zone-expandable` and the `Field` and `Text` properties as follow.
+
+     <p>Field:</p>
+     - `alias`: `expandable-field`
+     - `width`: `12`.
+     
+     <p>Text:</p>
+     - `alias`: `expandable-text`
+     - `value`: as you need.   
+    
+    <figure>
+       ![Final Expander example](./../../../assets/guides/expander/expander-example.png)
+       <figcaption>Figure 8 - Final Expander example</figcaption>
+    </figure>
+  
+  7. To preview the result, select `Toggles mode between: editing, previewing` in the Editor.
+  <figure>
+       ![Expander preview](./../../../assets/guides/expander/expander-preview.png)
+       <figcaption>Figure 9 - Expander preview</figcaption>
+  </figure>
+
+  8. Expander will be shown as follow:
+  <figure>
+       ![Final preview](./../../../assets/guides/expander/expander-final-preview.gif)
+       <figcaption>Figure 10 - Final preview</figcaption>
+  </figure>
+
+<Details summary={<summary><code>expander.osw</code></summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-expander",
+      "uuid": "ec4d0f6d-7565-4521-8a59-bce3d7aa7ae9",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "Panel",
+        "props": {
+          "alias": "panel-expander",
+          "uuid": "96bee9ad-eb26-4ab2-b307-83db36612a7b",
+          "slot": "content"
+        },
+        "children": [
+          {
+            "type": "CardContainer",
+            "props": {
+              "alias": "card-container-expander",
+              "uuid": "4885ca42-dc0a-496f-a7c9-e2c0b278116f"
+            },
+            "children": [
+              {
+                "type": "CardContainerHeader",
+                "props": {
+                  "alias": "card-container-header-expander",
+                  "uuid": "7f868e53-6a6d-40e9-8631-7cfa03c3bdc4"
+                },
+                "children": [
+                  {
+                    "type": "CardContainerZone",
+                    "props": {
+                      "alias": "card-container-zone-expander",
+                      "uuid": "a5464664-c9fa-4299-810a-510b1867c8ed",
+                      "size": 30
+                    },
+                    "children": [
+                      {
+                        "type": "Text",
+                        "props": {
+                          "alias": "text-header-expander",
+                          "uuid": "e6649b94-ec6d-49a8-ab02-036ae7db7d70",
+                          "value": "Bruce Wayne"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "CardContainerSeparator",
+                "props": {
+                  "alias": "card-container-separator-expander",
+                  "uuid": "72c7b5dc-d156-408d-9649-ee7948a80cb8"
+                }
+              },
+              {
+                "type": "CardContainerBody",
+                "props": {
+                  "alias": "card-container-body-expander",
+                  "uuid": "855ee685-4534-44b3-8b9e-76014249b917"
+                },
+                "children": [
+                  {
+                    "type": "Expander",
+                    "props": {
+                      "alias": "main-expander",
+                      "uuid": "52f40d93-dd65-450b-8d60-a1dd274bfb6f"
+                    },
+                    "children": [
+                      {
+                        "type": "CardContainerZone",
+                        "props": {
+                          "alias": "card-container-zone-bio",
+                          "uuid": "1e6d516e-2014-48ca-9a8f-163f4b37742c",
+                          "slot": "expander-content"
+                        },
+                        "children": [
+                          {
+                            "type": "Field",
+                            "props": {
+                              "alias": "bio-field",
+                              "uuid": "f94945fc-d53e-4716-b363-db8c02be1bac",
+                              "label": "Bio",
+                              "width": 12
+                            },
+                            "children": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "alias": "bio-text",
+                                  "uuid": "b08682ac-7cc3-4ef4-9b17-f2e52e185c7e",
+                                  "value": "American billionaire, business tycoon, philanthropist and owner of Wayne Enterprises corporation."
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "CardContainerZone",
+                        "props": {
+                          "alias": "card-container-zone-expandable",
+                          "uuid": "0691c343-44ba-4095-b935-3773a0c534f6",
+                          "slot": "expander-expandable-content"
+                        },
+                        "children": [
+                          {
+                            "type": "Field",
+                            "props": {
+                              "alias": "expandable-field",
+                              "uuid": "91453dc7-5f2e-4677-b120-b50e58f53110",
+                              "label": "Trivia",
+                              "width": 13
+                            },
+                            "children": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "alias": "expandable-text",
+                                  "uuid": "a2ca7113-e553-445c-b619-fb151a5f9e6d",
+                                  "value": "Never said i'm batman. It's just that no one has ever seen me and batman at the same time and same place."
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "expander"
+}
+```
+</Details>

@@ -1,0 +1,662 @@
+---
+sidebar_label: HistoryService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `HistoryService`
+
+The `HistoryService` provides programmatic navigation and route management capabilities for single-page applications. It wraps the browser history API and React Router, offering methods to navigate between routes, match URL patterns, manage route parameters, and listen for navigation events.
+
+The service operates through several key concepts:
+
+- **Navigation**: Methods to push new routes, go back, or redirect to external URLs
+- **Route Matching**: Pattern matching utilities to check if URLs match specific route templates
+- **Route Parameters**: Extract and manage dynamic parameters from URLs (e.g., `/user/:id`)
+- **Listeners**: Subscribe to path changes and route match events
+- **State Management**: Associate state data with navigation history entries
+
+<Admonition type="note">
+When an application uses the `Foundation` component, the `HistoryService` is already initialized by it.
+</Admonition>
+
+## Methods
+
+### `hasBeenInitialized`
+
+Checks if the HistoryService has been initialized.
+
+**Returns:** `true` if initialized, `false` otherwise
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    if (HistoryService.hasBeenInitialized()) {
+      console.log('History service is ready');
+    } else {
+      console.warn('History service not initialized');
+    }
+  }
+}
+```
+</Details>
+
+### `initialize`
+
+Initializes the history service with a history instance and location object. This must be called before using any other service methods.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { createBrowserHistory } from 'history';
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const history = createBrowserHistory();
+const location = history.location;
+
+HistoryService.initialize({ history, location });
+```
+</Details>
+
+### `push`
+
+Navigates to a new path, optionally with parameters and navigation options. By default, adds a new entry to the history stack and scrolls to the top.
+
+**Important**: The `push()` method only maintains the base path configured for the application. Route paths are not relative to the current location. For example, navigating from `/application/users` to `/:id/details` will result in `/123/details` (or `/base-path/123/details` if a base path is configured).
+
+**Parameters:**
+- `path` (string): The path to navigate to (can include parameter placeholders like `'/user/:id'`)
+- `params` (HistoryParameters, optional): Object containing parameter values to substitute in the path
+- `options` (HistoryNavigationOptions, optional): Navigation configuration
+
+**Options:**
+- `replace` (boolean): If `true`, replaces current entry instead of pushing, preventing users from navigating back. Default: `false`
+- `scrollToTop` (boolean): If `true`, scrolls to top after navigation. Default: `true`
+- `searchParams` (HistoryParameters): Query parameters to append to the URL
+- `state` (Record\<string, unknown\>): State object to associate with the history entry
+
+**Returns:** void
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { Routes } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnClick(MyFragmentAliases.VIEW_USER_BUTTON)
+  onViewUserClick(): void {
+    // Recommended: Use Routes enum for type safety
+    HistoryService.push(Routes.USERS);
+
+    // Navigation with parameters
+    HistoryService.push(Routes.USER_DETAILS, { id: '123' });
+
+    // Navigation with query parameters
+    HistoryService.push(Routes.SEARCH, undefined, {
+      searchParams: { query: 'test', page: '1' },
+    });
+
+    // Replace current entry (prevents going back)
+    HistoryService.push(Routes.LOGIN, undefined, { replace: true });
+
+    // Navigate without scrolling to top
+    HistoryService.push(Routes.DETAILS, undefined, { scrollToTop: false });
+
+    // Navigate with state
+    HistoryService.push(Routes.CHECKOUT, undefined, {
+      state: { referrer: 'cart' },
+    });
+  }
+}
+```
+</Details>
+
+<Admonition type="note">
+The service automatically removes the base URL from paths and ensures proper URL formation with the configured base URL. The code-generated `Routes` enum should be preferred over string literals.
+</Admonition>
+
+<Admonition type="caution">
+If the service is not initialized before calling `push`, it will throw an error: "Service not initialized".
+</Admonition>
+
+### `back`
+
+Navigates back in the browser history to the previous page. By default, scrolls to the top after navigation.
+
+**Parameters:**
+- `options` (HistoryNavigationOptions, optional): Navigation configuration
+  - `scrollToTop` (boolean): If `true`, scrolls to top after navigation. Default: `true`
+
+**Returns:** void
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnClick(MyFragmentAliases.BACK_BUTTON)
+  onBackClick(): void {
+    // Navigate back with default scroll to top
+    HistoryService.back();
+
+    // Navigate back without scrolling
+    HistoryService.back({ scrollToTop: false });
+  }
+}
+```
+</Details>
+
+<Admonition type="note">
+The `back` method retrieves the previous path from the location state's `from` property if available.
+</Admonition>
+
+### `redirect`
+
+Redirects to a URL by setting `window.location.href`. This causes a full page redirect and works for both internal and external URLs. Users can still use the browser back button to return to the previous page.
+
+**Parameters:**
+- `url` (string): The full URL to redirect to
+
+**Returns:** The new URL string
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnClick(MyFragmentAliases.RELOAD_BUTTON)
+  onReloadButtonClick(): void {
+    // Redirect to internal URL (full page redirect)
+    HistoryService.redirect('/dashboard');
+
+    // Redirect to external URL
+    HistoryService.redirect('https://www.example.com');
+
+    // Redirect to a different domain
+    HistoryService.redirect('https://api.example.com/auth');
+  }
+}
+```
+</Details>
+
+<Admonition type="warning">
+Using `redirect` will cause a full page redirect. Use `push` for standard SPA navigation. To prevent users from going back, use `push()` or `redirect()` with the `replace: true` option.
+</Admonition>
+
+### `getCurrentRoute`
+
+Gets the current route pathname from `window.location.pathname`.
+
+**Returns:** String containing the current route path
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const currentPath = HistoryService.getCurrentRoute();
+    console.log('Current path:', currentPath); // e.g., '/user/123'
+  }
+}
+```
+</Details>
+
+### `getCurrentRouteParams`
+
+Gets the parameters extracted from the current route based on the most recent route match.
+
+**Returns:** Object containing the current route parameters
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // If current route is '/user/123'
+    const params = HistoryService.getCurrentRouteParams();
+    console.log('User ID:', params.id); // '123'
+  }
+}
+```
+</Details>
+
+<Admonition type="note">
+Route parameters are updated when `setMatch` is called with a new match object, typically by the routing system.
+</Admonition>
+
+### `getCurrentRouteQueryParams`
+
+Gets the query parameters from the current URL search string.
+
+**Returns:** ParsedQuery object with query parameter key-value pairs
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // If current URL is '/search?query=test&page=2'
+    const queryParams = HistoryService.getCurrentRouteQueryParams();
+    console.log('Query:', queryParams.query); // 'test'
+    console.log('Page:', queryParams.page);   // '2'
+  }
+}
+```
+</Details>
+
+### `getCurrentRouteState`
+
+Gets the state object associated with the current history entry.
+
+**Returns:** Object containing the state data for the current route
+
+**Throws:** Error if the service is not initialized
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const state = HistoryService.getCurrentRouteState();
+    console.log('Referrer:', state.referrer);
+  }
+}
+```
+</Details>
+
+### `getMatch`
+
+Gets the current route match object, which contains information about the matched route pattern and extracted parameters.
+
+**Returns:** Match object (PathMatch from react-router-dom)
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const match = HistoryService.getMatch();
+    console.log('Matched pattern:', match.pattern);
+    console.log('Parameters:', match.params);
+    console.log('Pathname:', match.pathname);
+  }
+}
+```
+</Details>
+
+### `setMatch`
+
+Sets the current route match object and notifies all match listeners. This is typically called by the routing system when a route is matched.
+
+**Parameters:**
+- `match` (Match): The PathMatch object from react-router-dom
+
+**Returns:** void
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import { matchPath } from 'react-router-dom';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const match = matchPath('/user/:id', '/user/123');
+    if (match) {
+      HistoryService.setMatch(match);
+    }
+  }
+}
+```
+</Details>
+
+<Admonition type="note">
+Setting a match automatically updates the current route parameters and notifies all registered match listeners.
+</Admonition>
+
+### `matchRouteWith`
+
+Matches a route pattern against a URL path. Returns a match object if successful, or `false` if no match.
+
+**Parameters:**
+- `routeMatch` (string): The route pattern to match (can include parameters like `'/:id'`)
+- `route` (string, optional): The route to check. Default: current route
+
+**Returns:** Match object if successful, `false` if no match
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // Check if current route matches pattern
+    const match = HistoryService.matchRouteWith('/user/:id');
+    if (match !== false) {
+      console.log('User ID:', match.params.id);
+    }
+
+    // Check specific route against pattern
+    const match2 = HistoryService.matchRouteWith(
+      '/product/:category/:id',
+      '/product/electronics/123'
+    );
+    if (match2 !== false) {
+      console.log('Category:', match2.params.category); // 'electronics'
+      console.log('ID:', match2.params.id);             // '123'
+    }
+  }
+}
+```
+</Details>
+
+<Admonition type="note">
+The service automatically removes the base URL from the route before matching.
+</Admonition>
+
+### `matchRouteExactWithQueryParam`
+
+Checks if a route matches exactly with query parameters. This is a strict match that includes query string validation.
+
+**Parameters:**
+- `routeMatch` (string): The exact route pattern to match
+- `route` (string, optional): The route to check. Default: current route
+
+**Returns:** `true` if the route matches exactly, `false` otherwise
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // Check for exact match with parameter
+    const isMatch = HistoryService.matchRouteExactWithQueryParam(
+      '/user/:id/profile'
+    );
+    console.log('Exact match:', isMatch);
+  }
+}
+```
+</Details>
+
+### `makeURL`
+
+Creates a URL by removing the base URL prefix from a given path. Useful for normalizing URLs within the application.
+
+**Parameters:**
+- `url` (string): The URL to normalize
+
+**Returns:** String with the base URL removed
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // If base URL is '/app'
+    const normalized = HistoryService.makeURL('/app/user/123');
+    console.log('Normalized:', normalized); // '/user/123'
+  }
+}
+```
+</Details>
+
+### `addListener`
+
+Adds a listener that will be called when the path changes. Returns an unsubscribe function.
+
+**Parameters:**
+- `fn` (HistoryPathChangeListener): Async function that receives the new pathname
+
+**Returns:** Function to unsubscribe the listener
+
+**Throws:** Error if the same listener is already added
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.unsubscribe = HistoryService.addListener(async (pathname) => {
+      console.log('Path changed to:', pathname);
+      // Perform async operations like loading data
+      await this.loadDataForPath(pathname);
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+
+  async loadDataForPath(pathname: string): Promise<void> {
+    // Load data based on new path
+  }
+}
+```
+</Details>
+
+<Admonition type="warning">
+Always unsubscribe from path change listeners when the component unmounts to prevent memory leaks.
+</Admonition>
+
+<Admonition type="caution">
+Attempting to add the same listener function twice will throw an error.
+</Admonition>
+
+### `listenMatch`
+
+Adds a listener that will be called when the route match changes. Returns an unsubscribe function.
+
+**Parameters:**
+- `fn` (HistoryMatchListener): Function that receives the new match object
+
+**Returns:** Function to unsubscribe the listener
+
+**Throws:** Error if the same listener is already added
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.unsubscribe = HistoryService.listenMatch((match) => {
+      console.log('Route matched:', match.pathname);
+      console.log('Parameters:', match.params);
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+}
+```
+</Details>
+
+### `listenHistoryChange`
+
+Listens for history changes using the native history listener from the `history` package. Returns an unsubscribe function.
+
+**Parameters:**
+- `fn` (Listener): Function that receives the history update object
+
+**Returns:** Function to unsubscribe the listener
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.unsubscribe = HistoryService.listenHistoryChange((update) => {
+      console.log('Action:', update.action);
+      console.log('Location:', update.location);
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+}
+```
+</Details>
+
+## Best Practices
+
+- **Use the code-generated `Routes` enum**: Always prefer the `Routes` enum over string literals for route paths to ensure type safety and catch route changes at compile time
+- **Always unsubscribe**: Clean up listeners in the `@OnUnmount` lifecycle method to prevent memory leaks
+- **Prefer push over redirect**: Use `push` for standard SPA navigation and `redirect` for full page redirects
+- **Use replace option to prevent back navigation**: To prevent users from going back (e.g., after form submission), use `push()` or `redirect()` with `replace: true`
+- **Type parameters**: Use TypeScript interfaces for route parameters and state objects for better type safety
+- **Handle async listeners**: Remember that path change listeners are async and can return promises
+- **Default scroll behavior**: Be aware that navigation scrolls to top by default; explicitly set `scrollToTop: false` if needed
+
+## Common Patterns
+
+### Programmatic Navigation with Parameters
+
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { Routes } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.USER_LIST })
+class UserListController {
+  @OnClick(UserListAliases.USER_ITEM)
+  onUserClick(event: CustomEvent): void {
+    const userId = event.detail.userId;
+
+    // Recommended: Navigate using Routes enum
+    HistoryService.push(Routes.USER_PROFILE, {
+      id: userId,
+    });
+  }
+}
+```
+
+### Conditional Navigation Based on Route Match
+
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const match = HistoryService.matchRouteWith('/admin/:section');
+
+    if (match !== false) {
+      console.log('Admin section:', match.params.section);
+      this.loadAdminData(match.params.section as string);
+    } else {
+      console.log('Not in admin section');
+    }
+  }
+
+  loadAdminData(section: string): void {
+    // Load admin-specific data
+  }
+}
+```
+
+### Navigation with Query Parameters
+
+```tsx
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.SEARCH })
+class SearchController {
+  @OnClick(SearchAliases.SEARCH_BUTTON)
+  onSearchClick(): void {
+    const query = this.getSearchQuery();
+    const filters = this.getActiveFilters();
+
+    HistoryService.push('/search', undefined, {
+      searchParams: {
+        q: query,
+        category: filters.category,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+      },
+    });
+  }
+
+  @OnMount(SearchAliases.ALIAS)
+  onLayoutMount(): void {
+    // Read query parameters on mount
+    const params = HistoryService.getCurrentRouteQueryParams();
+    if (params.q) {
+      this.performSearch(params.q as string);
+    }
+  }
+
+  getSearchQuery(): string {
+    // Get search query from input
+    return '';
+  }
+
+  getActiveFilters(): any {
+    // Get active filters
+    return {};
+  }
+
+  performSearch(query: string): void {
+    // Perform search
+  }
+}
+```

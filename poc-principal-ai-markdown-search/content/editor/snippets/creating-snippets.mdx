@@ -1,0 +1,176 @@
+---
+title: Creating snippets
+sidebar_label: Creating snippets
+---
+
+Snippets are pre-defined component structures that can be inserted into applications. They save time by allowing developers to add commonly used patterns with just a few clicks, rather than building them from scratch.
+
+### Organization
+
+When deciding on where to store snippets, we recommend the creation of a dedicated package to serve as central repository. This package can co-exist with applications within a monorepo, or within a common repository where multiple teams can contribute with their snippets.
+
+External snippet packages can be made available to applications through the [`dependencies.snippets`](../../configuration/oswaldrc.md#reference-dependencies) configuration within the [`oswaldrc.json`](../../configuration/oswaldrc.md) file.
+
+### Snippet Architecture
+
+A well-structured snippet consists of these components:
+
+1.	**Interface Definitions** - Type definitions that enforce the structure of snippet properties and component properties
+2.	**Property Definitions** - Configurable parameters exposed to users in the snippet modal
+3.	**Component Creation Logic** - Functions that generate the component structure based on user inputs
+4.	**Snippet Configuration** - Metadata and registration information that integrates the snippet into Oswald
+
+### Implementation
+
+#### Define Type Interfaces
+
+Create clear interfaces to ensure type safety for both snippet properties and component structures:
+
+```tsx
+interface SnippetProperties {
+  endpoint: string;
+  entry: string;
+  item: {
+    key: string;
+    label: string;
+    value: string;
+  };
+}
+
+interface ComponentsProperties {
+  checklist: ComponentProps<ChecklistProps>;
+  fetch: ComponentProps<FetchProps>;
+  field: ComponentProps<FieldProps>;
+  mapper: ComponentProps<MapperProps>;
+}
+```
+
+#### Configure Property Definitions
+
+Define an array of property specifications that will generate the user interface in the snippet configuration modal:
+
+```tsx
+const properties: SnippetProperty[] = [
+  {
+    description: 'Defines how a field is accessed within a form...',
+    name: 'entry',
+    required: true,
+    type: string,
+  },
+  {
+    description: 'Defines the backend API endpoint URL...',
+    name: 'endpoint',
+    required: true,
+    type: intellisense(string, IntellisenseExpectedType.URL),
+  },
+  // Additional properties...
+];
+```
+
+#### Create Component Generation Logic
+
+Implement a function that transforms user inputs into component properties:
+
+```tsx
+function createComponentsProps(properties: SnippetProperties): ComponentsProperties {
+  const { endpoint, entry, item } = properties;
+
+  const field: NodeProps & Partial<FieldProps> = {
+    ...createNodeProps(`${entry}-field`),
+    alwaysShowLabel: true,
+    entry,
+  };
+
+  // Create additional component properties...
+
+  return {
+    checklist,
+    fetch,
+    field,
+    mapper,
+  };
+}
+```
+
+#### Implement Component Strucutre
+
+Create the main function that orchestrates the construction of the component hierarchy:
+
+```tsx
+function createChecklistField(options: ComponentSnippetCallbackOptions<SnippetProperties>): Promise<SnippetResult> {
+  const componentsProperties = createComponentsProps(options.properties);
+
+  const definitions: [string, NodeProps][] = [
+    ['Field', componentsProperties.field],
+    ['Fetch', componentsProperties.fetch],
+    ['Mapper', componentsProperties.mapper],
+    ['Checklist', componentsProperties.checklist],
+  ];
+
+  buildNodeChain({
+    bridge: options.fragment.getMetadataBridge(),
+    definitions,
+    parentNode: options.node,
+    updateOptions: {
+      breakpoint: options.application.getBreakpoint(),
+      locale: options.application.getLocale(),
+    },
+  });
+
+  return Promise.resolve({
+    success: true,
+  });
+}
+```
+
+#### Configure and Register the Snippet
+
+Define the snippet metadata and register it with the `SnippetCatalog`:
+
+```
+const checklistFieldSnippet: ComponentSnippet<SnippetProperties> = {
+  description: 'Adds a new Checklist Field to the Form.',
+  fn: createChecklistField,
+  id: 'oswald.snippet.checklist-field',
+  properties,
+  supportedTypes: [ComponentType.FORM],
+  title: 'Checklist Field',
+  type: SnippetType.COMPONENT,
+};
+
+SnippetCatalog.register(checklistFieldSnippet);
+```
+
+### Concepts
+
+#### Component Hierarchy Construction
+
+The ⁠buildNodeChain utility simplifies the creation of nested component structures:
+
+```tsx
+const definitions: [string, NodeProps][] = [
+  ['Field', { ... }],
+  ['Fetch', { ... }],
+  ['Mapper', { ... }],
+];
+```
+
+This approach creates a hierarchical structure where each component becomes the parent of the next component in the sequence. In this example:
+
+•	⁠Field becomes the parent of ⁠Fetch
+•	⁠Fetch becomes the parent of ⁠Mapper
+
+### Best Practices
+
+For creating effective, maintainable snippets:
+
+*	**Clear Documentation**: Provide comprehensive descriptions for each property to guide users
+*	**Defaults**: Set default values to minimize required user input
+*	*Appropriate Type Selection**: Choose property types that generate the most helpful UI controls
+*	**Consistent Naming**: Use predictable naming patterns for component aliases (e.g., ⁠`${entry}-field`)
+*	**Error Handling**: Implement error handling to provide meaningful feedback when issues occur
+*	**Visual Hierarchy**: Consider the visual organization of properties in the configuration modal
+
+### Examples
+
+Complete examples of snippets can be found within Oswald's [snippets package](https://github.com/philips-internal/oswald/tree/main/packages/snippets/src/snippets) of Oswald's repository

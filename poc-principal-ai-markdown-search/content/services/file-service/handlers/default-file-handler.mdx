@@ -1,0 +1,70 @@
+---
+sidebar_label: DefaultFileHandler
+---
+
+import Details from '@theme/Details';
+
+# `DefaultFileHandler`
+
+The handler goal is to interacts with the configured endpoints to perform file operations in server/backend through HTTP requests. This handler is the [`FileService`](../file-service.mdx)'s default behavior.
+
+### Configuration
+
+| Property              | Type       | Default                          | Description                                                       |
+|-----------------------|------------|----------------------------------|-------------------------------------------------------------------|
+| `errorResponseState`  | HttpStatus | HttpStatus.INTERNAL_SERVER_ERROR | The error response status that should be returned                 |
+| `previewUrl`          | string     | ''                               | The backend preview file endpoint URL                             |
+| `removeResponseState` | HttpStatus | HttpStatus.OK                    | The remove file operation response status that should be returned |
+| `removeUrl`           | string     | ''                               | The backend remove file endpoint URL                              |
+| `uploadResponseState` | HttpStatus | HttpStatus.CREATED               | The upload file operation response status that should be returned |
+| `uploadUrl`           | string     | ''                               | The backend upload endpoint URL                                   |
+
+#### Example
+
+<Details summary={<summary>Example: <code>Set file configuration</code></summary>}>
+```tsx
+function setupFileService():  void {
+  const fileHandlerProvider = (): FileHandler => {
+    const configuration = new FileHandlerConfiguration();
+    configuration.previewUrl = '/my-rest-api/files/preview?uri=';
+    configuration.uploadUrl = '/my-rest-api/files/upload';
+    configuration.uploadResponseState = HttpStatus.CREATED;
+    configuration.removeUrl = '/my-rest-api/files/remove';
+    configuration.removeResponseState = HttpStatus.OK;
+     
+    const fileHandler = new DefaultFileHandler();
+    fileHandler.setConfiguration(configuration);
+    
+    return fileHandler;
+  }
+
+  FileService.registerFileHandlerProvider({ provider: fileHandlerProvider, name: 'my-handler' });
+}
+```
+</Details>
+
+## Methods
+
+> **Note**
+> `DefaultFileHandler` implements the `FileHandler` interface adding their own methods as needed.
+
+### `download`
+ 
+Triggers a HTTP fetch (by default using a GET method) using the provided `path` that retrieves a blob and downloads it.
+
+### `getPreviewURL`
+
+Triggers a HTTP GET request using the `FileHandlerConfiguration.previewUrl` and the provided `path` to get the file preview URL.
+
+### `preview`
+
+Opens the file preview using the `FileHandlerConfiguration.previewUrl` and the provided `path`.
+
+### `remove`
+
+Triggers a HTTP DELETE using the `FileHandlerConfiguration.removeUrl` and the provided `path` that when succesfull calls the `onExecuteRemove` callback.
+
+### `upload`
+
+Triggers a HTTP POST request using the `FileHandlerConfiguration.uploadUrl` and the provided `file`.
+

@@ -1,0 +1,42 @@
+---
+sidebar_label: '@OnResize'
+---
+
+import Details from '@theme/Details';
+
+# `@OnResize`
+
+The `@OnResize` decorator is a powerful tool that enables developers to effortlessly listen to screen changes within their controllers. By applying this decorator to a controller method, developers can listen to resize events and execute custom logic whenever the screen dimensions changes. The decorator eliminates the need for manual event binding and provides a clean and standard approach to screen size monitoring.
+
+With the `@OnResize` decorator developers can optimize their interfaces, update layouts or perform any other necessary actions based on the current screen dimensions, enhancing the overall responsiveness and user experience of their applications.
+
+The decorator also supports custom locales by allowing developers to specify locale-specific behavior within their controllers, enabling the application to adapt its functionality to diferent regions or user preferences.
+
+### Examples
+
+```tsx title="/src/controllers/resize-controller.ts"
+import { SupportedLocale } from '@philips-internal/oswald-ui-constants';
+import type { Breakpoint } from '@philips-internal/oswald-ui-constants';
+import { OnResize } from '@philips-internal/oswald-ui-core';
+import { Controller } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+
+import { FragmentNames } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.RESIZE })
+export default class ResizeController {
+  @OnResize()
+  onScreenResize(breakpoint: Breakpoint): void {
+    console.log('breakpoint', breakpoint);
+  }
+
+  @OnResize({ locales: [SupportedLocale.PT_BR] })
+  onScreenResizePT_BR(breakpoint: Breakpoint): void {
+    console.log('breakpoint, pt-br', breakpoint);
+  }
+
+  @OnResize({ locales: [SupportedLocale.EN_US] })
+  onScreenResizeEN_US(breakpoint: Breakpoint): void {
+    console.log('breakpoint, en-us', breakpoint);
+  }
+}
+```

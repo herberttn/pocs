@@ -1,0 +1,76 @@
+---
+sidebar_label: DynamicActions
+---
+
+import Details from '@theme/Details';
+
+# `DynamicActions`
+
+The goal of this component is to render custom actions on demand, through the component API events, without having to drop them individually through Oswald.
+
+The `DynamicActions` component is able to display a `ContextMenu` with options inside it, or a series of `Link` components rendered side by side.
+
+To compose and set the actions which will be a part of the component, we have two methods available to us within the component API, `getData` and `setActions`. With the `getData` method, we're able to read all data passed to the component by its parents, and with the `setActions` method we can pass which actions we want to be shown.
+
+The `DynamicActions` can also be used to push actions to components with heading actions, such as `ContextualBar`, `Section` and `Subsection`, through the `setHeadingActions` method.
+
+### Example
+
+
+<Details open summary={<summary>Example: <code>Creating dynamic actions</code></summary>}>
+  ```tsx
+  import type { DynamicActionsAPI, HeadingContextAction } from '@philips-internal/oswald-ui-components';
+  import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+  import { MountEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+  import { ExampleAliases, FragmentNames } from '../../codegen/index.js';
+
+  @Controller({ fragment: FragmentNames.EXAMPLE })
+  class Example {
+
+    @OnMount(ExampleAliases.DYNAMIC_ACTIONS)
+    onDynamicActionsMount(event: MountEvent): void {
+      const dynamicActions = event.target as unknown as DynamicActionsAPI;
+      const data = dynamicActions.getData();
+
+      const actions: DynamicActionItem[] = [];
+      const headingActions: HeadingContextAction[] = [];
+
+      if (data.canEdit) {
+        actions.push({ action: () => this.onEditItem(data.id), title: 'example.edit' });
+      }
+
+      if (data.canDelete) {
+        actions.push({ action: () => this.onDeleteItem(data.id), title: 'example.delete' });
+      }
+
+      if (data.canViewDetails) {
+        headingActions.push({ 
+          enabled: true,
+          id: 'view-details',
+          onClick: () => this.onViewDetails(data.id),
+          style: ActionStyle.BUTTON,
+          text: 'example.view-details',
+        });
+      }
+
+      dynamicActions.setActions(actions);
+      dynamicActions.setHeadingActions(headingActions);
+    }
+
+    onDeleteItem(id: string): void {
+      console.log('delete-item', id);
+    }
+
+    onEditItem(id: string): void {
+      console.log('edit-item', id);
+    }
+
+    onViewDetails(id: string): void {
+      console.log('view-details', id);
+    }
+  }
+  ```
+</Details>
+
+

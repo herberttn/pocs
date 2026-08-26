@@ -1,0 +1,273 @@
+---
+title: Fragment Communication
+sidebar_label: 7. Fragment Communication
+sidebar_position: 7
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+As applications grow in complexity, fragments often need to communicate with each other to share data, coordinate behavior, and respond to events across different parts of the UI. Oswald provides two primary mechanisms for fragment communication: [**DataContext**](./../reference/contexts/data-context.mdx) for shared state management and [**BrokerService**](./../services/broker-service.mdx) for event-based messaging.
+
+Fragments are designed to be modular and reusable, which means they should avoid tight coupling with other fragments. However, real-world applications require fragments to:
+
+* **Share data**: Pass information between different parts of the UI
+* **Coordinate actions**: Trigger behaviors in response to events from other fragments
+* **Synchronize state**: Keep multiple fragments in sync when underlying data changes
+* **Maintain decoupling**: Communicate without creating direct dependencies
+
+### Communication Methods
+
+#### Choosing the Right Approach
+
+| Use Case | DataContext | BrokerService |
+|----------|--------------|---------------|
+| Parent-child data sharing | ✅ Preferred | ❌ Not recommended |
+| Sibling fragment communication | ⚠️ Possible via common parent | ✅ Preferred |
+| One-to-many notifications | ❌ Not suitable | ✅ Preferred |
+| Hierarchical state | ✅ Preferred | ❌ Not recommended |
+| Event broadcasting | ❌ Not suitable | ✅ Preferred |
+| Unrelated fragments | ❌ Creates coupling | ✅ Preferred |
+
+#### Using Context for Shared State
+
+**Data Contexts** provide a way to share state and data across multiple fragments. They are ideal for:
+
+* Sharing application-wide state
+* Providing data to deeply nested fragments
+* Managing state that multiple fragments need to read and write
+
+<Admonition type="info">
+  Data Contexts follow a provider-consumer pattern where a parent fragment provides data that child fragments can consume.
+</Admonition>
+
+**When to Use Data Contexts**:
+
+* **Shared application state**: User preferences, configuration
+* **Data that multiple fragments need**: Selected items, current workflow state
+* **Parent-child communication**: Passing data down the fragment hierarchy
+* **State synchronization**: Keeping multiple fragments in sync with the same data source
+
+**Example**:
+
+```tsx title="src/controllers/parent-child-context-example.ts"
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, ParentFragmentAliases, ChildFragmentAliases } from '../codegen/index.js';
+
+// Provider Fragment - Shares data
+@Controller({ fragment: FragmentNames.PARENT })
+class ParentFragmentController {
+  @Inject(ContextType.DATA)
+  declare dataContext: DataContext;
+
+  @OnMount(ParentFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.dataContext.set({
+      userId: '12345',
+      userName: 'John Doe',
+      role: 'admin'
+    });
+  }
+}
+
+// Consumer Fragment - Reads shared data
+@Controller({ fragment: FragmentNames.CHILD })
+class ChildFragmentController {
+  @Inject(ContextType.DATA)
+  declare dataContext: DataContext;
+
+  @OnMount(ChildFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    const userName = this.dataContext.get('userName');
+    const role = this.dataContext.get('role');
+
+    console.log('User:', userName);
+    console.log('Role:', role);
+  }
+}
+
+export { ParentFragmentController, ChildFragmentController };
+```
+
+### Using BrokerService for Event-Based Messaging
+
+The **BrokerService** implements a publish-subscribe pattern that enables loosely coupled communication between fragments. It is ideal for:
+
+* Broadcasting events across the application
+* Notifying multiple fragments about state changes
+* Decoupled communication between unrelated fragments
+* Cross-cutting concerns like notifications or analytics
+
+<Admonition type="info">
+  `BrokerService` uses topics (string identifiers) as communication channels. Any fragment can publish to a topic, and any fragment can subscribe to receive messages from that topic.
+</Admonition>
+
+
+**When to Use `BrokerService`**:
+
+* **Event broadcasting**: Notify multiple fragments about an action (save, delete, refresh)
+* **Cross-fragment coordination**: Trigger actions in unrelated fragments
+* **Loosely coupled communication**: Fragments that shouldn't know about each other
+* **Global notifications**: System-wide events like errors, success messages, or status updates
+
+**Example**:
+
+```tsx title="src/controllers/broker-service-example.ts"
+import { Controller, OnClick, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { BrokerService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, ToolbarFragmentAliases, DashboardFragmentAliases } from '../codegen/index.js';
+
+// Fragment A - Publisher
+@Controller({ fragment: FragmentNames.TOOLBAR })
+class ToolbarFragmentController {
+  @OnClick(ToolbarFragmentAliases.REFRESH_BUTTON)
+  onRefreshClick(): void {
+    BrokerService.publishToTopic('data-refresh-requested', {
+      timestamp: Date.now(),
+      source: 'toolbar'
+    });
+  }
+}
+
+// Fragment B - Subscriber
+@Controller({ fragment: FragmentNames.DASHBOARD })
+class DashboardFragmentController {
+  private unsubscribe: (() => void) | null = null;
+
+  @OnMount(DashboardFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.unsubscribe = BrokerService.subscribeToTopic(
+      'data-refresh-requested',
+      (message) => {
+        console.log('Refresh requested at:', message.timestamp);
+        this.refreshData();
+      }
+    );
+  }
+
+  @OnUnmount(DashboardFragmentAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+
+  private refreshData(): void {
+    // Reload dashboard data
+  }
+}
+
+export { ToolbarFragmentController, DashboardFragmentController };
+```
+
+### Best Practices
+
+#### General Guidelines
+
+* **Choose the right tool**: Use contexts for hierarchical data sharing, `BrokerService` for event broadcasting
+* **Type your data**: Use TypeScript interfaces for both context data and message payloads
+* **Document your topics**: Maintain a list of topic names and their message structures
+* **Keep messages simple**: Use plain objects that can be easily serialized
+* **Avoid circular dependencies**: Be careful not to create infinite event loops
+
+#### `BrokerService` Best Practices
+
+* **Always unsubscribe**: Clean up subscriptions in `@OnUnmount` to prevent memory leaks
+* **Use descriptive topic names**: Choose semantic names like `'patient-saved'` instead of `'event1'`
+* **Centralize topic names**: Consider creating a constants file for all topic names
+* **Handle missing data**: Subscribers should handle cases where expected message data is missing
+* **Limit subscriber logic**: Keep subscriber callbacks focused and delegate to other methods
+
+#### `DataContext` Best Practices
+
+* **Establish clear ownership**: Define which fragment owns and updates context data
+* **Keep context data immutable**: Avoid modifying context objects directly
+* **Use appropriate scope**: Create contexts at the appropriate level in the fragment hierarchy
+* **Validate data**: Check that context data exists and has the expected shape
+* **Document data contracts**: Clearly specify what data the context contains
+
+<Admonition type="warning">
+  Always unsubscribe from `BrokerService` topics in the `@OnUnmount` lifecycle method to prevent memory leaks and unexpected behavior.
+</Admonition>
+
+<Admonition type="caution">
+  Avoid creating circular event chains where Fragment A publishes to a topic that Fragment B listens to, which then publishes to a topic that Fragment A listens to. This can create infinite loops.
+</Admonition>
+
+### Common Questions
+
+**Q: Can both Data Context and BrokerService be used in the same application?**  
+A: Yes, and this is common in real-world applications. Use Data Context for hierarchical state sharing and `BrokerService` for event broadcasting. They serve different purposes and complement each other.
+
+**Q: How can data be shared between sibling fragments?**  
+A: Use a common parent fragment to provide a Data Context that both siblings can consume, or use `BrokerService` if the communication is event-based rather than state-based.
+
+**Q: What happens if a message is published to a topic with no subscribers?**  
+A: Nothing. The message is published but not delivered to anyone. This is safe and expected behavior.
+
+**Q: Can multiple fragments subscribe to the same topic?**  
+A: Yes. `BrokerService` supports multiple subscribers per topic. All subscribers will receive the message when it's published.
+
+**Q: How can complex objects be passed through `BrokerService`?**  
+A: `BrokerService` can handle any JavaScript object. However, messages should be kept simple and serializable. Avoid passing functions, class instances, or circular references:
+
+```tsx
+// Good - Plain object
+BrokerService.publishToTopic('user-updated', {
+  userId: '123',
+  name: 'John Doe',
+  timestamp: Date.now()
+});
+
+// Avoid - Complex instance
+BrokerService.publishToTopic('user-updated', new UserModel());
+```
+
+**Q: Should a constants file be created for topic names?**  
+A: Yes, highly recommended. This prevents typos and makes refactoring easier:
+
+```tsx title="src/constants/topics.ts"
+export const Topics = {
+  DATA_REFRESH_REQUESTED: 'data-refresh-requested',
+  USER_LOGGED_OUT: 'user-logged-out',
+  NOTIFICATION_RECEIVED: 'notification-received',
+} as const;
+```
+
+**Q: Can Data Context be used to communicate between unrelated fragments?**  
+A: Technically yes, by placing the context at a common ancestor, but this creates coupling. For unrelated fragments, `BrokerService` is the better choice.
+
+**Q: What is the performance impact of using `BrokerService`?**  
+A: `BrokerService` is lightweight and performs well for typical use cases. However, publishing high-frequency events (e.g., mouse movement) or large payloads should be avoided.
+
+**Q: How can `BrokerService` messages be debugged?**  
+A: Add logging in subscribers, or use browser DevTools to set breakpoints. It is also possible to temporarily subscribe to a topic just to log messages:
+
+```tsx
+BrokerService.subscribeToTopic('my-topic', (msg) => {
+  console.log('Topic message:', msg);
+});
+```
+
+**Q: Can the result of a `BrokerService` publish be awaited?**  
+A: No. `BrokerService` is fire-and-forget.
+
+**Q: What happens if unsubscribing is forgotten?**  
+A: The subscription remains active even after the component unmounts, causing memory leaks and potentially invoking callbacks on unmounted components, leading to errors. Always unsubscribe in `@OnUnmount`.
+
+**Q: Can Data Context be updated from a child fragment?**  
+A: Yes, any fragment with access to the context can read and write to it. However, only that fragment and its child fragments will be able to use that data, as the Data Context is hierarchical.
+
+## Related Resources
+
+* [Fragments](./fragments.mdx) - Learn about fragments
+* [Controllers](./controllers.mdx) - Learn about fragment controllers
+* [`BrokerService` Reference](./../services/broker-service.mdx) - Complete API documentation
+* [`DataContext` Reference](./../reference/contexts/data-context.mdx) - Context API details
+* [Application Lifecycle](./application-lifecycle.mdx) - Understanding controller initialization

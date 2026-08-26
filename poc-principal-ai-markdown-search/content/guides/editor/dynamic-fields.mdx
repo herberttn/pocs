@@ -1,0 +1,502 @@
+---
+title: Dynamic Fields
+sidebar_label: Dynamic Fields
+---
+
+import Details from '@theme/Details';
+
+This guide shows how to use the Dynamic Fields component to create dynamic forms, using json to assemble the structure of the form fields.
+
+### Requirements
+This guide assumes previous knowledge on how to [create fragments](./basic-layout.mdx).
+
+A fragment with the components `Layout`, `ContextualBar`, `Form` and `DynamicFields` will be used.
+
+<figure>
+   ![Initial Tree](./../../../assets/guides/dynamic-fields/dynamic-fields-initial-tree.png)
+   <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+  - Create the controller for the fragment, if necessary, you can check the [Codegen](./codegen.mdx) guide for creating the controller.
+
+### How to use
+
+The Dynamic Field expects to receive a [Metadata](https://github.com/philips-internal/oswald/blob/a30c88369247d13c88e76f8bf9f8d4fa7409bf0a/packages/components/src/components/dynamic-fields/dynamic-fields-types.ts#L20C1-L39C2) object to build the form structure. An example of the expected structure will be given in this guide.
+
+Add a new event when creating the DynamicFields component.
+  - Select the `DynamicFields` component.
+  - Click on the `Events` tab.
+  - Right click the `onMount` event and select `Add event implementation`.
+
+This will create an event listener for when the `DynamicFields` is mounted.
+
+```tsx
+@Controller({ fragment: FragmentNames.DYNAMIC_FIELDS_GUIDE })
+class DynamicFieldsGuideController {
+
+  @OnMount(DynamicFieldsGuideAliases.DYNAMIC_FIELDS_FORM)
+  handleDynamicFieldsFormMount(): void {}
+
+}
+```
+
+In the method created, we will use the `HttpService` to make a request to the backend, which will return the DynamicField structure. It is also necessary to `Inject` the `DynamicField` component that was added to the form.
+
+#### DynamicField Inject
+In the controller add the Inject of 2 components `Form` and `DynamicFields`.
+```tsx
+  @Inject(DynamicFieldsGuideAliases.DYNAMIC_FIELDS_FORM)
+  declare dynamicField: DynamicFieldsAPI;
+
+  @Inject(DynamicFieldsGuideAliases.MAIN_FORM)
+  declare mainForm: FormAPI;
+```
+
+#### Request structure of DynamicFields
+Change the created method to the following logic:
+```tsx
+  @OnMount(DynamicFieldsGuideAliases.DYNAMIC_FIELDS_FORM)
+  handleDynamicFieldsFormMount(): void {
+    void HttpService.get<Metadata>('/api/dynamic-fields').then(response => {
+      if (!response.body) {
+        console.warn('No metadata found');
+        return;
+      }
+
+      this.dynamicFieldForm.setMetadata(response.body);
+    });
+  }
+```
+
+The implemented endpoint will return the following structure:
+<Details summary={<summary>DynamicFields form metadata: </summary>}>
+```json
+{
+   "children":[
+      {
+         "componentType":"FIELD",
+         "entry":"numericInteger",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"integer"
+            }
+         },
+         "formula":{
+            "/":[
+               {
+                  "+":[
+                     "2",
+                     "2"
+                  ]
+               },
+               "1"
+            ]
+         },
+         "id":"input_numeric_integer",
+         "label":"Numeric Input",
+         "width":3
+      },
+      {
+         "componentType": "FIELD",
+         "entry": "passwordField",
+         "fieldType": "INPUT",
+         "id": "password_field",
+         "label": "Password Input",
+         "sensitiveData": "hidden",
+         "type": "password",
+         "width": 3,
+      },
+      {
+         "children":[
+            {
+               "componentType":"FIELD",
+               "entry":"checkboxOption1",
+               "fieldType":"CHECKBOX",
+               "id":"input_checkbox_1",
+               "label":"Checkbox",
+               "width":3
+            },
+            {
+               "componentType":"FIELD",
+               "entry":"checkboxOption2",
+               "fieldType":"CHECKBOX",
+               "id":"input_checkbox_2",
+               "label":"Checkbox",
+               "width":3
+            },
+            {
+               "componentType":"FIELD",
+               "entry":"checkboxOption3",
+               "fieldType":"CHECKBOX",
+               "id":"input_checkbox_3",
+               "label":"Checkbox",
+               "visibilityCondition":false,
+               "width":3
+            }
+         ],
+         "componentType":"FIELD_SET",
+         "entry":"checkbox",
+         "id":"input_checkbox",
+         "label":"FieldeSet"
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"radioGroup",
+         "fieldType":"RADIO_GROUP",
+         "id":"input_radio_group",
+         "label":"RadioGroup",
+         "options":[
+            {
+               "label":"RadioGroup option 1",
+               "value":"100"
+            },
+            {
+               "label":"RadioGroup options 2",
+               "value":"200"
+            }
+         ],
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "data":[
+            {
+               "key":"100",
+               "label":"Checklist option 1"
+            },
+            {
+               "key":"200",
+               "label":"Checklist option 2"
+            }
+         ],
+         "entry":"checklist",
+         "fieldType":"CHECKLIST",
+         "id":"input_checklist",
+         "label":"Checklist",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"personId",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"person-id"
+            }
+         },
+         "id":"input_text_mask",
+         "label":"Input with mask - person id",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"shortDate",
+         "fieldType":"DATE_FIELD",
+         "id":"input_date",
+         "label":"DateField",
+         "width":3
+      },
+      {
+         "alignment":"CENTER",
+         "componentType":"FIELD",
+         "entry":"text",
+         "fieldType":"TEXT",
+         "fontSize":"sm",
+         "id":"input_text",
+         "label":"Lorem ipsum dolor sit amet, conse ctetur adipiscing elit. Quisque pul vinar pulvinar ipsum, et hendrerit quam. Proin ornare sagittis mi quis finibus. Duis pulvinar porttitor ornare.",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"textArea",
+         "fieldType":"TEXT_AREA",
+         "id":"input_textarea",
+         "label":"Textarea",
+         "resizable":true,
+         "rows":10,
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "emptyResultExpression":"tws.not-found.results-not-found",
+         "enabled":true,
+         "entry":"autocomplete",
+         "fieldType":"AUTOCOMPLETE",
+         "id":"input_autocomplete",
+         "label":"Autocomplete",
+         "options":[
+            {
+               "label":"Autocomplete option 1",
+               "value":"100"
+            },
+            {
+               "label":"Autocomplete option 2",
+               "value":"200"
+            }
+         ],
+         "placeholder":"Autocomplete",
+         "primaryKey":"id",
+         "queryKey":"Autocomplete",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"numeric",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"numeric",
+               "options":{
+                  "groupSize":3,
+                  "padFractionalZeros":true,
+                  "scale":5
+               }
+            }
+         },
+         "id":"input_numeric",
+         "label":"Numeric Input",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"postalCode",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"postal-code"
+            }
+         },
+         "id":"input_formatter_postal_code",
+         "label":"Input with postal-code",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"numericFloat",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"float",
+               "options":{
+                  "scale":5
+               }
+            }
+         },
+         "id":"input_numeric_float",
+         "label":"Float Input",
+         "width":3
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"currency",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"currency"
+            }
+         },
+         "id":"input_currency",
+         "label":"Currency Input",
+         "width":3
+      },
+      {
+         "componentType": "FIELD",
+         "entry": "partiallyHidden",
+         "fieldType": "INPUT",
+         "id": "input_partially_hidden",
+         "label": "Partially Hidden Input",
+         "sensitiveData": "partially-hidden",
+         "width": 3,
+      },
+      {
+         "componentType":"FIELD",
+         "entry":"full",
+         "fieldType":"INPUT",
+         "formatters":{
+            "value":{
+               "name":"date",
+               "options":{
+                  "type":"full"
+               }
+            }
+         },
+         "id":"input_fulldate",
+         "label":"full (readonly)",
+         "readOnly":true,
+         "visibilityCondition":{
+            ">":[
+               {
+                  "var":"numeric"
+               },
+               90
+            ]
+         },
+         "width":3
+      }
+   ],
+   "componentType":"DYNAMIC_FIELDS",
+   "id":"my_custom_id"
+}
+```
+</Details>
+
+After implementation we will have the following result:
+<figure>
+   ![DynamicFields application result](./../../../assets/guides/dynamic-fields/dynamic-field-application-result.png)
+   <figcaption>Figure 2 - DynamicFields application result</figcaption>
+</figure>
+
+
+#### Adding initial values to the form.
+In the [Form](./../../components/form.md) component it is possible to load the values of each field, generally used when editing a form. For this, another method will be implemented in the controller.
+  - In the Oswald component tree, select the `Form` component.
+  - Click on the `Events` tab.
+  - Right click the `onMount` event and select `Add event implementation`.
+  - In the created method, the following request will be made to load the form values.
+
+```tsx
+void HttpService.get<Record<string, Value>>('/api/dynamic-fields-form-value').then(response => {
+   if (!response.body) {
+      console.warn('No default values found');
+      return;
+   }
+
+    this.mainForm.setRecord(response.body);
+});
+```
+
+The data returned in the request:
+<Details summary={<summary>Form values: </summary>}>
+```json
+{
+   "autocomplete":{
+      "label":"Autocomplete option 1",
+      "value":"100"
+   },
+   "checkbox":true,
+   "checkboxOption1":true,
+   "checkboxOption2":false,
+   "checkboxOption3":true,
+   "checklist":[
+      {
+         "key":"100",
+         "label":"Checklist option 1"
+      }
+   ],
+   "currency":12345,
+   "full":"2020-01-02T03:04:05.123Z",
+   "numeric":123456,
+   "numericFloat":123456,
+   "numericInteger":123456789,
+   "personId":"014.438.640-21",
+   "postalCode":12345678,
+   "radioGroup":{
+      "key":"100"
+   },
+   "shortDate":"2021-11-18",
+   "text":"Lorem ipsum dolor sit amet, conse ctetur adipiscing elit. Quisque pul vinar pulvinar ipsum, et hendrerit quam. Proin ornare sagittis mi quis finibus. Duis pulvinar porttitor ornare.",
+   "textArea":"My text area"
+}
+```
+</Details>
+
+After implementation we will have the following result:
+<figure>
+  ![Form load data](./../../../assets/guides/dynamic-fields/dynamic-field-application-form-load-data.png)
+  <figcaption>Figure 3 - Form load data</figcaption>
+</figure>
+
+### Source Code
+<Details summary={<summary>Dynamic Form Guide Fragment: <code>dynamic-fields-guide.osw</code> </summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout",
+      "uuid": "53dbffde-01f7-4d8b-ac02-6f9208808ad7",
+      "templateAreas": "\"content content content\"\"content content content\"\"content content content\""
+    },
+    "children": [
+      {
+        "type": "ContextualBar",
+        "props": {
+          "alias": "contextual-bar",
+          "uuid": "3da553cb-19d3-41de-b286-0b6f7aa2993e",
+          "slot": "content"
+        },
+        "children": [
+          {
+            "type": "Form",
+            "props": {
+              "alias": "main-form",
+              "uuid": "bf1dda11-14c5-46cc-b078-0493f86a5be0",
+              "slot": "content"
+            },
+            "children": [
+              {
+                "type": "DynamicFields",
+                "props": {
+                  "alias": "dynamic-fields-form",
+                  "uuid": "912bc957-df51-4f8b-a2d3-b65c442decd6"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "dynamic-fields-guide"
+}
+```
+</Details>
+<Details summary={<summary>Dynamic Form Guide Controller: <code>dynamic-fields-guide-controller.ts</code> </summary>}>
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { DynamicFieldsAPI, FormAPI, Metadata } from '@philips-internal/oswald-ui-components';
+import { Value } from '@philips-internal/oswald-ui-core';
+import Controller, { OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { HttpService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { DynamicFieldsGuideAliases, FragmentNames } from '../../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.DYNAMIC_FIELDS_GUIDE })
+class DynamicFieldsGuideController {
+  @Inject(DynamicFieldsGuideAliases.DYNAMIC_FIELDS_FORM)
+  declare dynamicField: DynamicFieldsAPI;
+
+  @Inject(DynamicFieldsGuideAliases.MAIN_FORM)
+  declare mainForm: FormAPI;
+
+  @OnMount(DynamicFieldsGuideAliases.DYNAMIC_FIELDS_FORM)
+  handleDynamicFieldsFormMount(): void {
+     void HttpService.get<Metadata>('/api/dynamic-fields').then(response => {
+         if (!response.body) {
+            console.warn('No metadata found');
+            return;
+         }
+
+         this.dynamicFieldForm.setMetadata(response.body);
+      });
+   }
+
+  @OnMount(DynamicFieldsGuideAliases.MAIN_FORM)
+  handleMainFormMount(): void {
+      void HttpService.get<Record<string, Value>>('/api/dynamic-fields-form-value').then(response => {
+         if (!response.body) {
+            console.warn('No default values found');
+            return;
+         }
+
+         this.mainForm.setRecord(response.body);
+      });
+   }
+}
+
+export default DynamicFieldsGuideController;
+
+```
+</Details>

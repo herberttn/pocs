@@ -1,0 +1,40 @@
+---
+sidebar_label: Auto logoff
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# Auto logoff
+
+### Configuration
+
+The `AuthenticationConfiguration` has a property called `inactivity` which represents the amount of time a user can be inactive before the user's session times out and closes. If not informed the default value will be 15 minutes.
+
+For instructions on how to use the `ConfigurationService` please refer to the [`ConfigurationService`](../services/configuration-service.mdx) page.
+
+### Reset countdown from nested browser contexts
+
+The countdown time can be reseted programmatically in order to extend the user session.
+
+To reset the countdown a message must be posted to the parent brower context, using Oswald's own [`IFrameMessageService`](../services/iframe-message-service.mdx).
+
+<Admonition type="note">
+  Since there's the need to use Oswald's <code>IFrameMessageService</code>, it's only possible to reset the timer from nested browsering contexts.
+</Admonition>
+
+#### Example
+
+<Details open summary={<summary>Example: Sending reset time countdown post message with <code>IFrameMessageService</code></summary>}>
+  ```tsx
+  import { IFRAME_SERVICE_RESET_IDLE_MESSAGE_ID, IFrameMessageService } from '@philips-internal/oswald-ui-components';
+
+  @Controller({ fragment: FragmentNames.EXAMPLE })
+  class Example {
+    @OnClick(ExampleAliases.BUTTON)
+    onButtonClickMount(event: MountEvent): void {
+      IFrameMessageService.publishToParent(IFRAME_SERVICE_RESET_IDLE_MESSAGE_ID, event);
+    }
+  }
+  ```
+</Details>

@@ -1,0 +1,122 @@
+---
+sidebar_label: from v4 to v5
+title: Migrating from v4 to v5
+---
+
+import Admonition from '@theme/Admonition';
+
+import { VersionToolHighlightList, VersionToolHistoryList, VersionToolInstructionsList, VersionToolLink, VersionToolRequirementList } from '@site/src/versions/components';
+import { version as current } from '@site/src/versions/v4';
+import { version as next } from '@site/src/versions/v5';
+
+# Migrating from <VersionToolLink of={current.oswald.version}/> to <VersionToolLink of={next.oswald.version}/>
+Released in <VersionToolLink of={next.oswald.release}/>.
+
+## Highlights
+Oswald <VersionToolLink of={next.oswald.version}/> focuses on updating tools and dependencies to more recent versions while requiring little to no changes in dependent applications code.
+
+- **Engines**: _Most notable changes_
+  <VersionToolHighlightList of={next.engines} />
+- **Tools and dependencies**: _Most notable changes_
+  <VersionToolHighlightList of={next.dependencies} />
+
+## Breaking changes
+
+- **Engines**
+  <VersionToolHistoryList from={current.engines} to={next.engines} />
+- **Tools and dependencies**
+  <VersionToolHistoryList from={current.dependencies} to={next.dependencies} />
+
+## Migration steps
+
+### 1. Prepare
+<Admonition type="tip">
+  We recommend updating your project to the latest <VersionToolLink of={current.oswald.version}/> before upgrading to <VersionToolLink of={next.oswald.version}/>.
+</Admonition>
+
+### 2. Required tools
+Oswald <VersionToolLink of={next.oswald.version}/> requires the following:
+  <VersionToolRequirementList of={next.engines} />
+
+### 3. Required access
+Oswald <VersionToolLink of={next.oswald.version}/> now depends on packages that are published to GitHub Packages, as Oswald itself will too.
+Follow the guide below to get or validate your access.
+
+> See: [GitHub packages authentication](../../guides/github-packages-authentication.mdx)
+
+### 4. Dependencies
+This will help you migrate to <VersionToolLink of={next.oswald.version}/>.
+
+<Admonition type="caution">
+  Goes without saying, but don't change anything under any `node_modules` directory.
+</Admonition>
+
+#### 4.1 Bump TWS dependencies
+Bump all occurrences of all TWS dependencies to the same <VersionToolLink of={next.oswald.version}/> version.
+
+Make sure there are no TWS dependencies with a different version by searching for any `@philips-emr/tws-` within `package.json` files across your entire project.
+If any of them are a different version, change it to the same version as the others.
+
+#### 4.2 Bump other dependencies
+Search for each dependency listed below in all of your `package.json` files and update them all to the same exact specified version, so there are no conflicting versions to cause problems.
+**Ignore the ones you do not depend on and do not add them either.** The necessary ones come included in Oswald.
+
+<VersionToolInstructionsList of={next.instructions.bump}/>
+
+<Admonition type="danger">
+  ***DO NOT ADD*** any of these dependencies if you don't ***REALLY*** need to use them directly.
+</Admonition>
+
+<Admonition type="tip">
+  You can (and probably should) remove the ones you do not use directly (i.e. is not imported anywhere in your code).  
+  Except for `typescript`, which is usually not imported in code.
+</Admonition>
+
+#### 4.3 Reset
+This will ensure a fresh dependencies tree, without conflicts, dupes or leftovers from previous versions.
+```shell
+npx rimraf --glob '**/node_modules' '**/package-lock.json'
+```
+
+#### 4.4 Install
+Run the following command to install everything.
+```shell
+npm install
+```
+
+### 5. TypeScript configuration
+**Change the following** `compilerOptions` in your main `tsconfig` file.  
+You should find the file where these options currently exist and change them.
+ ```json5
+ {
+   "compilerOptions": {
+     // ...
+     // you only need to change these specific options
+
+     "lib": [
+       "DOM",
+       "DOM.Iterable",
+       "ES2015",
+       "ES2016",
+       "ES2017",
+       "ES2018",
+       "ES2019",
+       "ES2020",
+       "ESNext",
+       "ScriptHost"
+     ],
+     "target": "ES2018"
+   }
+ }
+ ```
+
+### 6. Build and fix
+Most of the changes necessary are done at this point.  
+Now it's a matter of building your TypeScript project and fixing the remaining problems.  
+Use the [Breaking changes](#breaking-changes) section to search for the relevant class, function, service or type and find what has changed.  
+
+**Rinse and repeat.**
+
+### 7. Start and test
+Start your application by using your `npm` task that executes the `tws-builder` cli command.  
+Then, test your application to make sure everything is working as it was before.

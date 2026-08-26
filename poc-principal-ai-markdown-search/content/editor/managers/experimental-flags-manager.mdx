@@ -1,0 +1,26 @@
+---
+title: Experimental Flags Manager
+sidebar_label: Experimental Flags Manager
+---
+
+Experimental flags allow users to enable experimental or beta features in Oswald based applications that are still in development or testing. These flags can be toggled on or off, and are not recommended for use in production environments.
+
+Experimental flags may be used to test new or upcoming features, gather feedback or to provide a way for developers to test and iterate on their work before it is released. They can also be used to disable or enable certain features that may not yet be stable or fully functional.
+
+It is important to note that experimental flags should be used with caution as they can potentially cause unexpected behavior or crashes.
+
+### How to use
+
+To access the experimental flags manager in Oswald, using the Spotlight feature, type `>Open experimental flags manager`, as demonstrated in Figure 1. Once opened, users will be presented with a screen displaying all available experimental falgs, their values and a short description, as shown in Figure 2.
+
+Users can select the desired experimental flags and save their changes. The updated settings will be saved to the `/resources/experimental-flags.json` file, which is utilized when bootstrapping applications to initialize the [`ExperimentalFlagsService`](../../services/experimental-flags-service.mdx).
+
+<figure>
+  ![Experimental flags manager being searched in Oswald's spotlight](./../../../assets/editor/experimental-flags-manager-spotlight.png)
+  <figcaption>Figure 1 - Experimental flags manager being searched in Oswald's spotlight</figcaption>
+</figure>
+
+<figure>
+  ![Experimental flags manager showing all available flags](./../../../assets/editor/experimental-flags-manager.png)
+  <figcaption>Figure 2 - Experimental flags manager showing all available flags</figcaption>
+</figure>

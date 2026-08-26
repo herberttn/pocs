@@ -1,0 +1,229 @@
+---
+title: Checklist
+sidebar_label: Checklist
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+To display and allow the selection of more than one option, Oswald provides the `Checklist` component.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `Checklist` a fragment with the components `Layout` and `ContextualBar` will be used.
+
+<figure>
+  ![Initial Tree](./../../../assets/guides/checklist/checklist-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+### How to use
+
+  1. In the components tab, search for `Form` and drag it into the `ContextualBar` > `content` area. Change the property `alias` to `checklist-form`. Check the properties `disabled` and `editing`.
+  <figure>
+  ![Create Form](./../../../assets/guides/checklist/checklist-form.gif)
+  <figcaption>Figure 2 - Create Form</figcaption>
+  </figure>
+
+  2. Inside the `checklist-form` include a new `Field` component.
+  <figure>
+  ![Create Field](./../../../assets/guides/checklist/checklist-field.gif)
+  <figcaption>Figure 3 - Create Field</figcaption>
+  </figure>
+
+  3. Add the `Fetch` component inside the `Field` that was created in the step above. 
+  <figure>
+  ![Create Fetch](./../../../assets/guides/checklist/checklist-fetch.gif)
+  <figcaption>Figure 4 - Create Fetch</figcaption>
+  </figure> 
+
+  4. In the properties tab, change the property `alias` to `checklist-fetch` and the property `endpoint` to `/api/cities` that will bring a list of cities.
+  <figure>
+  ![Fetch Properties](./../../../assets/guides/checklist/checklist-fetch-properties.png)
+  <figcaption>Figure 5 - Fetch Properties</figcaption>
+  </figure>
+  
+  5. Add the `Mapper` component as a child of the `Fetch` component.  Change the property `alias` to `checklist-mapper`.
+  
+  <figure>
+  ![Create Mapper](./../../../assets/guides/checklist/checklist-mapper.gif)
+  <figcaption>Figure 6 - Create Mapper</figcaption>
+  </figure> 
+
+  6. Change the property `alias` to `checklist-mapper` and configure the `map` property as follows:
+  <figure>
+  ![Mapper Property](./../../../assets/guides/checklist/checklist-mapper-map.png)
+  <figcaption>Figure 7 - Mapper Property</figcaption>
+  </figure>
+
+  <Admonition type="note">
+  For more information about the concept of `Fetch` and `Mapper` components, consider accessing the documentation [Listing cards](./fetch-mapper-deck.mdx).
+  </Admonition>
+
+  7. Now in the components tab, search for `Checklist` and drag it into the `checklist-mapper`.
+  <figure>
+  ![Create Checklist](./../../../assets/guides/checklist/create-checklist.gif)
+  <figcaption>Figure 8 - Create Checklist</figcaption>
+  </figure>
+
+  8. To create the controller for the fragment, you can check the [Codegen](./codegen.mdx) guide. But basically:
+  - In the Oswald Metadata tab, select the `fragment.osw` fragment.
+  - Right click and select `Create Controller`.
+  <figure>
+  ![Create Fragment Controller](./../../../assets/guides/checklist/checklist-fragment-controller.gif)
+  <figcaption>Figure 9 - Create Fragment Controller</figcaption>
+  </figure>
+
+### Accessing the fragment
+
+To access the fragment, a route `/application/checklist` was created using Oswald's Route Manager. For instructions on how to use it, refer to the [Route Manager](./routes.mdx).
+When accessing the route the fetch process will execute, and upon receiving the result from the configured endpoint, the `Checklist` will render the mapped data.
+<figure>
+![Accessing Checklist](./../../../assets/guides/checklist/checklist-application.gif)
+<figcaption>Figure 10 - Accessing Checklist</figcaption>
+</figure>
+
+#### Adding a `Clear` action to the Checklist.
+In the `ContextualBar` component it is possible to include actions related to a content. 
+
+Search for `Action`, in the components tab, and drag it into the `ContextualBar` > `actions` area. Change the `alias` property to `clear-checklist` and `text` property to `Clear`.
+<figure>
+![Create Clear Action](./../../../assets/guides/checklist/checklist-clear-action.gif)
+<figcaption>Figure 11 - Create Clear Action</figcaption>
+</figure>
+
+To generate the `OnClick()` event in the controller, use the [Codegen](./codegen.mdx) functions to: 
+
+1. [Inject](./codegen.mdx#adding-injections) a reference to the example `Checklist` API
+2. [Add an `OnClick` event listener](./codegen.mdx#adding-event-listeners) to the `Clear` action and change its content as follows:
+```tsx
+@OnClick(ChecklistAliases.CLEAR_CHECKLIST)
+  onClearChecklistClick(): void {
+    this.exampleChecklist.clear();
+  }
+```
+
+After implementation we will have the following result:
+<figure>
+![Checklist Clear](./../../../assets/guides/checklist/checklist-clear.gif)
+<figcaption>Figure 12 - Checklist Clear</figcaption>
+</figure>
+
+### Source Code
+<Details summary={<summary>Checklist Fragment: <code>checklist.osw</code> </summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-checklist",
+      "uuid": "ace4617f-d28f-432b-8159-842ff5ba6270",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "ContextualBar",
+        "props": {
+          "alias": "contextual-bar-checklist",
+          "uuid": "b007c45d-90c7-4594-9df9-a6a6a9df3153",
+          "slot": "content",
+          "title": "Checklist"
+        },
+        "children": [
+          {
+            "type": "Form",
+            "props": {
+              "alias": "checklist-form",
+              "uuid": "9dba6bb7-def0-4c40-95b4-77a63136fbc3",
+              "disabled": true,
+              "editing": true,
+              "slot": "content"
+            },
+            "children": [
+              {
+                "type": "Field",
+                "props": {
+                  "alias": "checklist-field",
+                  "uuid": "ab02c55c-ed9f-4816-bcf1-ade7bae398f9"
+                },
+                "children": [
+                  {
+                    "type": "Fetch",
+                    "props": {
+                      "alias": "checklist-fetch",
+                      "uuid": "be5bb88d-2f25-4d2f-ada8-239ab5853695",
+                      "endpoint": "/api/cities"
+                    },
+                    "children": [
+                      {
+                        "type": "Mapper",
+                        "props": {
+                          "alias": "checklist-mapper",
+                          "uuid": "6571c5ce-79c7-448f-a231-f76edf5dd65a",
+                          "map": {
+                            "key": "id",
+                            "label": "name",
+                            "value": "id"
+                          },
+                          "component": ""
+                        },
+                        "children": [
+                          {
+                            "type": "Checklist",
+                            "props": {
+                              "alias": "example-checklist",
+                              "uuid": "06a1b085-38c6-4441-879b-3b8b25bbab49"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Action",
+            "props": {
+              "alias": "clear-checklist",
+              "uuid": "a17146f7-448f-4a59-93b8-474c8b030a36",
+              "text": "Clear",
+              "slot": "actions"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "name": "checklist"
+}
+```
+</Details>
+<Details summary={<summary>Checklist Controller: <code>checklist-controller.ts</code> </summary>}>
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import type { ChecklistAPI, FormAPI } from '@philips-internal/oswald-ui-components';
+import Controller, { OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { MountEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { ChecklistAliases, FragmentNames } from '../../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.CHECKLIST })
+export default class ChecklistController {
+
+  @Inject(ChecklistAliases.EXAMPLE_CHECKLIST)
+  declare exampleChecklist: ChecklistAPI;
+  
+  @OnClick(ChecklistAliases.CLEAR_CHECKLIST)
+  onClearChecklistClick(): void {
+    this.exampleChecklist.clear();
+  }
+
+}
+```
+</Details>

@@ -1,0 +1,133 @@
+---
+title: Slidebar
+sidebar_label: Slidebar
+---
+
+import Details from '@theme/Details';
+
+For scenarios where additional information needs to be presented to the user, Oswald provides the `Slidebar` component, providing left and right placement as well the possibility to choose the theme.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `Slidebar` a fragment with the components `Layout` and `Panel` will be used.  
+
+<figure>
+  ![Initial Tree](./../../../assets/guides/slidebar/slidebar-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+### How to use
+
+   1. In the components tab, search for `Slidebar` and drag it into the panel.
+
+  <figure>
+      ![Create a Slidebar](./../../../assets/guides/slidebar/slidebar-create.gif)
+      <figcaption>Figure 2 - Create a Slidebar</figcaption>
+  </figure>
+
+   2. Select the `Tree` tab and select the `Slidebar` component.
+
+   3. Select the `Properties` tab, you will be presented with all the properties that the `Slidebar` component contains, as mentioned before, each component has its properties and they may vary depending on the component. 
+   
+   4. Check the property `open` and define a title for the `Slidebar`.
+
+  <figure>
+      ![Define a title](./../../../assets/guides/slidebar/slidebar-title.gif)
+      <figcaption>Figure 3 - Define a title</figcaption>
+  </figure>
+   
+   5. Add a new `Panel` component inside de Slidebar and change the `alias` for `panel-slidebar`.
+   <figure>
+      ![Add a panel](./../../../assets/guides/slidebar/slidebar-panel.gif)
+      <figcaption>Figure 4 - Add a panel inside slidebar</figcaption>
+  </figure>
+   
+   6. Add a `Text` component to the `Panel` just included.
+     <figure>
+       ![Add a text](./../../../assets/guides/slidebar/slidebar-text.gif)
+       <figcaption>Figure 5 - Add a text</figcaption>
+     </figure>         
+   
+   7. Select the `Text` component that we added in the previous step and click on the `Properties` tab, in the `value` property add the additional information text to show in the `Slidebar`. 
+   Change the properties of the `Text` component to:
+    - `size` = `md`.
+    - `alias` = `text-slidebar`
+    <figure>
+       ![Text property](./../../../assets/guides/slidebar/slidebar-text-prop.gif)
+       <figcaption>Figure 6 - Text property</figcaption>
+    </figure>
+
+     Layout will be as follows:
+
+     <figure>
+       ![Final Slidebar example](./../../../assets/guides/slidebar/slidebar-final.png)
+       <figcaption>Figure 7 - Final Slidebar example</figcaption>
+     </figure>
+
+    8. To preview the result, select `editing, preview` in the Editor
+
+     <figure>
+       ![Final Slidebar preview](./../../../assets/guides/slidebar/slidebar-preview.png)
+       <figcaption>Figure 8 - Final Slidebar preview</figcaption>
+     </figure>
+
+<Details summary={<summary><code>slidebar.osw</code></summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-slidebar",
+      "uuid": "260d2e04-c150-46e2-851a-57c30d4bb311",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "Panel",
+        "props": {
+          "alias": "panel-content",
+          "uuid": "06182cb2-0dc9-4091-ae1a-d0f0820c4ba0",
+          "slot": "content"
+        },
+        "children": [
+          {
+            "type": "Slidebar",
+            "props": {
+              "alias": "slidebar",
+              "uuid": "84d081a5-fd36-407e-8856-8ec5006b27a6",
+              "open": true,
+              "title": "Title",
+              "theme": "very-dark"
+            },
+            "children": [
+              {
+                "type": "Panel",
+                "props": {
+                  "alias": "panel-slidebar",
+                  "uuid": "1ed09fdd-4d8b-4dfa-97aa-11ed4d44ca46"
+                },
+                "children": [
+                  {
+                    "type": "Text",
+                    "props": {
+                      "alias": "text-slidebar",
+                      "uuid": "51c6ee7a-374a-4ffc-82c2-e4233214bd29",
+                      "size": "md",
+                      "value": "tws.about-box.message"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "slidebar"
+}
+```
+</Details>

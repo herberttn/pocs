@@ -1,0 +1,99 @@
+---
+sidebar_label: ModalService
+---
+
+import Details from '@theme/Details';
+
+# `ModalService`
+
+The service's goal is to facilitate the interaction and development with Modals, providing methods to open and close different Modal types.
+
+## Methods
+
+### `openDefault`
+
+Opens a new Modal with the `DEFAULT` type.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Default Modal</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    ModalService.openDefault({
+      id: 'my-modal',
+      fragment: 'my-other-fragment',
+      onClose: () => alert('Closed.'),
+    });
+  }
+}
+```
+</Details>
+
+### `openDialog`
+
+Opens a new Modal with the `DIALOG` type.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Dialog Modal</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    ModalService.openDialog({
+      id: 'my-modal',
+      dialogDescription: 'my-dialog-description',
+      onClose: () => alert('Closed.'),
+    });
+  }
+}
+```
+</Details>
+
+### `openFullscreen`
+
+Opens a new Modal with the `FULLSCREEN` type.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Fullscreen Modal</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    ModalService.openFullscreen({
+      id: 'my-modal',
+      fragment: 'my-other-fragment',
+      onClose: () => alert('Closed.'),
+    });
+  }
+}
+```
+</Details>
+
+### `close`
+
+Closes a specific Modal by its id.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Close a Modal</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    ModalService.close('my-modal');
+  }
+}
+```
+</Details>

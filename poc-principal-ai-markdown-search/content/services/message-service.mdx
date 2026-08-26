@@ -1,0 +1,127 @@
+---
+sidebar_label: MessageService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `MessageService`
+
+The service provides developers with internationalization (i18n) capabilities, enabling applications to display content in multiple languages. It handles the translation of text expressions and automatically updates when the language changes through the `LanguageService`.
+
+<Admonition type="info">
+The `MessageService` must be initialized after the `LanguageService` has been initialized, as it depends on the language configuration.
+</Admonition>
+
+<Admonition type="note">
+When an application uses the `Foundation` component, both the `LanguageService` and `MessageService` are already initialized by it.
+</Admonition>
+
+## Methods
+
+### `hasBeenInitialized`
+
+Returns whether the service has been initialized.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { MessageService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const initialized = MessageService.hasBeenInitialized();
+    console.log('Service initialized:', initialized);
+  }
+}
+```
+</Details>
+
+### `initialize`
+
+Initializes the message service with the configured languages. This can only be done once and must be called after `LanguageService` has been initialized.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { LanguageService, MessageService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+async function initializeServices(): Promise<void> {
+  await LanguageService.initialize();
+  await MessageService.initialize();
+}
+```
+</Details>
+
+### `addListener`
+
+Adds a listener that will be called every time the language changes. Returns a function to remove the listener.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { MessageService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  declare removeListener: () => void;
+
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    this.removeListener = MessageService.addListener(() => {
+      console.log('Language changed, translations updated');
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.ALIAS)
+  onLayoutUnmount(): void {
+    if (this.removeListener) {
+      this.removeListener();
+    }
+  }
+}
+```
+</Details>
+
+### `translate`
+
+Translates an expression into its corresponding text for the current language. Supports interpolation of dynamic values.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { MessageService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // Simple translation
+    const title = MessageService.translate('application.name');
+
+    // Translation with interpolation
+    const greeting = MessageService.translate('application.greeting', {
+      name: 'John Doe',
+    });
+
+    // Translation with multiple arguments
+    const message = MessageService.translate('application.multiple', {
+      actual: 65,
+      total: 100,
+    });
+
+    console.log(title, greeting, message);
+  }
+}
+```
+</Details>
+
+<Admonition type="tip">
+If a translation key is not found in the configured languages, the `translate` method will return the expression itself without any interpolated values applied.
+</Admonition>
+
+## Integration with LanguageService
+
+The `MessageService` automatically listens to language changes from the `LanguageService`. When the language changes, the service:
+
+1. Updates the internal translation data to match the new language
+2. Notifies all registered listeners so they can update their UI accordingly
+3. Caches translations for each language to improve performance on subsequent language switches

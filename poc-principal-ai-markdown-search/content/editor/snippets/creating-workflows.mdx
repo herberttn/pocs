@@ -1,0 +1,112 @@
+---
+title: Creating workflows
+sidebar_label: Creating workflows
+---
+
+Workflows, similar to snippets, are a pre-defined set of instructions to interact with Oswald's editor through its application state, allowing developers to create fragments, routes, modules and more, encapsulating complex scenarios and requirements into a single workflow call.
+
+### Organization
+
+When deciding on where to store workflows, we recommend their placement alognside snippets in a custom package, allowing its co-existence with applications within a monorepo or within a common repository where multiple teams can contribute with their own workflows.
+
+External workflow packages can be made available to applications through the [`dependencies.snippets`](../../configuration/oswaldrc.md#reference-dependencies) configuration within the [`oswaldrc.json`](../../configuration/oswaldrc.md) file.
+
+### Workflow Architecture
+
+A well-structured workflow consists of these components:
+
+1.	**Interface Definitions** - Type definitions that enforce the workfow structure and properties
+2.	**Property Definitions** - Configurable parameters exposed to users in the workflow modal
+3.	**Execution Logic** - Function that executes the workflow based on user inputs
+4.	**Workflow Configuration** - Metadata and registration information that integrates the workflow into Oswald
+
+### Implementation
+
+#### Define Type Interfaces
+
+Create clear interfaces to ensure type safety for both snippet properties and component structures:
+
+```tsx
+interface WorkflowProperties {
+  id: string;
+  name: string;
+  // Additional properties...
+}
+```
+
+#### Configure Property Definitions
+
+Define an array of property specifications that will generate the user interface in the workflow configuration modal:
+
+```tsx
+const properties: SnippetProperty[] = [
+  {
+    description: 'Defines the id of the module being created.',
+    name: 'id',
+    required: true,
+    type: string,
+  },
+  {
+    description: 'Defines the name of the module being created.',
+    name: 'name',
+    required: true,
+    type: string,
+  },
+  // Additional properties...
+];
+```
+
+#### Implement Execution Logic
+
+Implement the main function that is executed when the workflow is called:
+
+```tsx
+function run(options: WorkflowSnippetCallbackOptions<WorkflowProperties>): Promise<SnippetResult> {
+  const { application, properties } = options;
+
+  const { moduleStore } = application;
+  const { id, name } = properties;
+
+  if (moduleStore.findModule({ id: properties.id })) {
+    return Promise.reject({ message: `Module with id ${properties.id} already exists.`, success: false });
+  }
+
+
+  const module = {
+    ...
+  };
+
+  ...
+
+  return Promise.resolve({ success: true });
+}
+```
+
+#### Configure and Register the Workflow
+
+Define the workflow metadata and register it with the `SnippetCatalog`:
+
+```
+SnippetCatalog.register({
+  description: 'Workflow to simplify the module creation process.',
+  fn: run,
+  id: 'oswald.workflow.new-module',
+  properties,
+  title: 'New Module',
+  type: SnippetType.WORKFLOW,
+});
+```
+
+### Best Practices
+
+For creating effective, maintainable workflows:
+
+*	**Clear Documentation**: Provide comprehensive descriptions for each property to guide users
+*	**Defaults**: Set default values to minimize required user input
+*	*Appropriate Type Selection**: Choose property types that generate the most helpful UI controls
+*	**Error Handling**: Implement error handling to provide meaningful feedback when issues occur
+*	**Visual Hierarchy**: Consider the visual organization of properties in the configuration modal
+
+### Examples
+
+Complete examples of workflows can be found within Oswald's [snippets package](https://github.com/philips-internal/oswald/tree/main/packages/snippets/src/workflows) of Oswald's repository

@@ -1,0 +1,319 @@
+---
+title: Controllers
+sidebar_label: 3. Controllers
+sidebar_position: 3
+---
+
+import Admonition from '@theme/Admonition';
+
+Controllers are TypeScript classes that act as **bridges between developers and fragments**, enabling interaction with components through event handling and direct API access. Controllers manage the behavior and data flow associated with fragment components.
+
+### Purpose
+
+Controllers serve as the **business logic layer** for your fragments, separating UI structure (defined in fragments) from application behavior (defined in controllers). This separation enables:
+
+* **Maintainability**: Change behavior without modifying fragment structure
+* **Organization**: Keep related logic grouped in a single class
+
+### Declaring a Controller
+
+To create a controller, you must:
+
+1. Define a TypeScript class
+2. Annotate it with the `@Controller` decorator
+3. Link it to a specific fragment using the `fragment` parameter
+
+**Basic Controller Structure**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Controller } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+
+import { FragmentNames } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  // Controller logic here
+}
+
+export { MyFragmentController };
+```
+
+<Admonition type="warning">
+  **Important**: Controllers must be imported at the application root level to be registered with the framework. See the [Application Lifecycle](./application-lifecycle.mdx) section for details on proper controller registration.
+</Admonition>
+
+### Controller Capabilities
+
+Controllers enable developers to:
+
+* **Listen to component events** using decorator-based event handlers
+* **Interact with component APIs** directly through method calls
+* **Inject components and contexts** using dependency injection
+* **Implement locale-specific behaviors** for internationalization
+
+### Events
+
+Events are the primary mechanism for responding to user interactions and component state changes within fragments. Oswald provides decorator-based event handlers that automatically connect controller methods to component events.
+
+#### Event Decorators
+
+Event decorators are applied to controller methods to listen for specific events on specific components. When the event occurs, the decorated method is automatically invoked.
+
+#### Event Handler Syntax
+
+Event decorators can be used in multiple ways:
+
+**Simple Alias Reference**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  onSubmitClick(): void {
+    // Handle click event
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+**Object Configuration**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @OnClick({ alias: MyFragmentAliases.SUBMIT_BUTTON })
+  onSubmitClick(): void {
+    // Handle click event
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+**With Locale Specification**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { SupportedLocale } from '@philips-internal/oswald-ui-constants';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnClick({ alias: MyFragmentAliases.SUBMIT_BUTTON, locales: [SupportedLocale.PT_BR] })
+  onSubmitClickPT_BR(): void {
+    // Handle click for Portuguese (Brazil) locale
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+#### Event Objects
+
+All event handler methods receive an event object as their parameter. Every event object contains the following properties:
+
+##### `target`
+
+The `target` property provides access to the **API of the component that triggered the event**. This is implemented as a Proxy object that forwards method calls to the actual component instance.
+
+**What is a Proxy?**: A Proxy in JavaScript is a special object that wraps another object and can intercept operations performed on it (like property access or method calls). In Oswald, Proxies serve a critical role in managing component lifecycle and preventing memory leaks.
+
+**Why Oswald Uses Proxies**: Oswald wraps component APIs in proxies to automatically manage the lifecycle of API objects. When a component is unmounted and its node destroyed, the framework can invalidate the associated API object through the Proxy, ensuring proper cleanup of resources.
+
+**Practical Implications**:
+
+* **Automatic Cleanup**: You don't need to manually track whether a component still exists - the Proxy handles this for you
+* **Memory Management**: The Proxy allows Oswald to release references to destroyed components, preventing memory leaks
+
+**Example**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import type { ButtonAPI } from '@philips-internal/oswald-ui-components';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  onSubmitClick(event: ClickEvent): void {
+    const buttonAPI = event.target as ButtonAPI;
+
+    buttonAPI.setLoading(true);
+    buttonAPI.setEnabled(false);
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+##### Event-Specific Properties
+
+Beyond the `target` property, each event type provides additional properties relevant to that specific event.
+
+### Component APIs
+
+Component APIs provide a programmatic interface for interacting with components during runtime. Through APIs, developers can:
+
+* Get and set component properties
+* Interact with component state
+* Trigger component actions
+
+#### Accessing APIs
+
+There are two primary ways to access component APIs in controllers.
+
+**When to Use Each Approach**:
+
+* **Event Handlers**: Use when you only need the API within the event handler itself
+* **Dependency Injection**: Use when you need to access the API across multiple methods or need to coordinate between components
+
+**1. Through Event Handlers**
+
+When handling events, the `target` property of the event object provides direct access to the component's API:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import type { ButtonAPI } from '@philips-internal/oswald-ui-components';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  onSubmitClick(event: ClickEvent): void {
+    const buttonAPI = event.target as ButtonAPI;
+
+    buttonAPI.setLoading(true);
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+**2. Through Dependency Injection**
+
+For components you need to access outside of their own event handlers, use the `@Inject` decorator with [Odin](./odin.mdx):
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Inject } from '@odinjs/odin';
+
+import type { ButtonAPI } from '@philips-internal/oswald-ui-components';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @Inject(MyFragmentAliases.DELETE_BUTTON)
+  declare deleteButtonAPI: ButtonAPI;
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  onSubmitClick(event: ClickEvent): void {
+    const buttonAPI = event.target as ButtonAPI;
+
+    buttonAPI.setLoading(true);
+    this.deleteButtonAPI.setEnabled(false);
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+#### API Methods
+
+All component APIs in Oswald extend from a base [`ComponentAPI`](../api/componentapi.md) class, which provides fundamental methods available to every component. Beyond these base methods, each component API offers specialized methods relevant to its functionality. The complete list of component APIs and their methods can be found in the [Component APIs documentation](/category/api).
+
+**Type Safety**: Always import the specific API type from `@philips-internal/oswald-ui-components` to get full TypeScript autocomplete and type checking for available methods.
+
+<Admonition title="Important Consideration" type="warning">
+  **Mounted Components Only**: You can only interact with components that are currently mounted. Attempting to use an injected component API for a component that is not mounted will throw a runtime error.
+</Admonition>
+
+### Common Questions
+
+**Q: Can one controller manage multiple fragments?**
+A: No. Each controller is linked to exactly one fragment via the `@Controller` decorator's `fragment` parameter. To manage multiple fragments, separate controller classes must be created.
+
+**Q: Can multiple controllers manage the same fragment?**
+A: No. Each fragment can only have one controller. If you need to share logic across fragments, create utility functions or services that multiple controllers can use.
+
+**Q: What happens if a controller is not imported at the application root?**
+A: The controller will not be registered with the framework, and its event handlers will never be invoked. Controllers must always be imported in the application entry point.
+
+**Q: How should errors in event handlers be handled?**
+A: Event handler methods are regular class methods. Use try-catch blocks to handle errors, and consider logging or displaying error messages to users as appropriate.
+
+**Q: Can async/await be used in event handlers?**
+A: Yes. Event handler methods can be async. The framework will handle async methods appropriately:
+
+```tsx
+@OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+async onSubmitClick(event: ClickEvent): Promise<void> {
+  const buttonAPI = event.target as ButtonAPI;
+  buttonAPI.setLoading(true);
+
+  try {
+    await this.submitForm();
+  } finally {
+    buttonAPI.setLoading(false);
+  }
+}
+```
+
+**Q: What is the difference between `@Inject` and accessing via `event.target`?**
+A: `event.target` provides the API of the component that triggered the event. `@Inject` provides access to any component in the fragment by its alias, regardless of which component triggered the event.
+
+**Q: Is it necessary to clean up injected component APIs?**
+A: No. Oswald automatically manages the lifecycle of component APIs through Proxies. When components are unmounted, the framework handles cleanup automatically.
+
+## Troubleshooting
+
+**Problem**: Event handler never gets called
+- **Check**: Is the controller imported at application root level?
+- **Check**: Does the alias match exactly (case-sensitive)?
+- **Check**: Is the component actually in the fragment?
+- **Check**: Does the component support this event type?
+
+**Problem**: "Cannot read property of undefined" when accessing injected API
+- **Check**: Is the component currently mounted?
+- **Check**: Did you use `declare` keyword with `@Inject`?
+- **Check**: Is the alias spelled correctly?
+
+**Problem**: TypeScript errors on alias references
+- **Solution**: Regenerate TypeScript enums after fragment changes
+- **Solution**: Run build process to update generated files
+
+## Related Resources
+* [Fragments](./fragments.mdx) - Learn about fragments
+* [Component Lifecycle](./component-lifecycle.mdx) - Learn about components lifecycle

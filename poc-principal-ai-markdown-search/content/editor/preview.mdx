@@ -1,0 +1,46 @@
+---
+title: Real Time Preview
+sidebar_label: Real Time Preview
+---
+
+import Admonition from '@theme/Admonition';
+
+import oswaldApplicationRealTime from './../../assets/editor/oswald-application-real-time.mp4';
+import oswaldEditorRealTime from './../../assets/editor/oswald-editor-real-time.mp4';
+
+Oswald's editor offers a powerful real-time preview feature that enhances the editing experience. Users can instantly see their changes reflected in the application, providing immediate feedback and facilitating efficient modifications.
+
+This seamless integration enables effortless interaction with the editor through context menu actions associated with each rendered node. It streamlines the editing process, allowing for quick iterations and promoting a productive workflow.
+
+To activate the real-time preview feature, open Oswald's editor and click on the real-time preview icon in the toolbar (see Figure 1). This action will open a new browser window and load the application.
+
+<figure>
+  ![Oswald's real time preview icon](./../../assets/editor/oswald-real-time-toolbar.png)
+  <figcaption>Figure 1 - Oswald's real time preview icon.</figcaption>
+</figure>
+
+### Application
+
+Once the application is loaded, right-clicking on an element will bring up a context menu (see Figure 2). This context menu provides various options to interact with the editor, such as opening a fragment or editing the selected node.
+
+<figure>
+  <video controls width="100%">
+    <source src={oswaldApplicationRealTime}/>
+  </video>
+  <figcaption>Figure 2 - Application interacting with the context menu.</figcaption>
+</figure>
+
+<Admonition type="note">
+  Please note that this context menu is only available when running the application through Oswald using the command `oswald editor run`. It is disabled when running the application in normal mode with commands like `oswald application dev`.
+</Admonition>
+
+### Editor
+
+Conversely, any changes made in the editor, including adding, editing, or removing fragment nodes, are instantly reflected in the application with a slight delay to prevent network overload (see Figure 3).
+
+<figure>
+  <video controls width="100%">
+    <source src={oswaldEditorRealTime}/>
+  </video>
+  <figcaption>Figure 3 - Editor relaying changes to the application.</figcaption>
+</figure>

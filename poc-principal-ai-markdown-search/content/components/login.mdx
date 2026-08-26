@@ -1,0 +1,186 @@
+---
+sidebar_label: Login
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+import cautionIcon from './../../assets/components/about-box/caution-icon.png';
+import companyAddressOutlineIcon from './../../assets/components/about-box/company-address-outline-icon.png';
+import companyAddressIcon from './../../assets/components/about-box/company-address-icon.png';
+import companyReferenceIcon from './../../assets/components/about-box/company-reference-icon.png';
+import LOTIcon from './../../assets/components/about-box/lot-icon.png';
+import REFIcon from './../../assets/components/about-box/ref-icon.png';
+import UIDIcon from './../../assets/components/about-box/udi-icon.png';
+
+# `Login`
+
+The goal of this component is to abstract away the complexity of the login process by encapsulating the login functionality. 
+
+For instructions on what situations to use the component, and rules regarding its design please refer to the [Philips EMR design specification](http://design.emr.philips.com.br).
+
+### Customization
+
+The component can be customized to include custom elements in two slots:
+ - `custom`: Area to drop components that will appear below the component's form area;
+ - `secondary-content`: Area to drop components that will appear right before the component's footer.
+
+### Requirements
+
+The Login component depends on information configured through the [`ConfigurationService.setAuthenticationConfiguration`](../services/configuration-service.mdx#setauthenticationconfiguration) method, information which consists of everything needed for the application authentication flow, from routes redirection to API endpoints.
+
+### AboutBox
+
+Internally the `Login` component uses the `AboutBox` component to display information not shown directly in the Login UI, such as the copyright notice and other necessary legal information.
+
+<Admonition type="note">
+  `AboutBox` is a internal oswald component that is inside `Login`. It **can not** be used/dropped in a fragment by the user like others components.
+</Admonition>
+
+This component is always controlled by the `Login` component, including its properties, so to change them it is necessary to go through `LoginProps.aboutBoxProps` property or the `LoginAPI.setAboutBoxProps` method.
+
+<Details open summary={<summary>Example: <code>AboutBox static information declaration</code></summary>}>
+  ```tsx
+  import type { LoginAPI } from '@philips-internal/oswald-ui-components';
+  import Controller, { OnCatch, OnMount } from '@philips-internal/oswald-ui-core/lib/client';
+  import { MountEvent } from '@philips-internal/oswald-ui-core/lib/component/types';
+
+  import { ExampleAliases, FragmentNames } from '../../codegen';
+
+  @Controller({ fragment: FragmentNames.EXAMPLE })
+  class Example {
+    
+    @OnMount(LoginAliases.MAIN_LOGIN)
+    onLoginMount(event: MountEvent): void {
+      const login = event.target as LoginAPI;
+
+      login.setAboutBoxProps({
+        companyAddress: 'Street A',
+        companyComplementaryAddress: 'Block B',
+        messageExpression: 'This is a message',
+        productName: 'Oswald',
+        productSubtitle: 'Oswald: sample application',
+        secondaryMessageExpression: 'This is a secondary message',
+      });
+    }
+  }
+  ```
+</Details>
+
+The information shown by the `AboutBox` component is obtained both statically through its properties and dynamically through the contents of the application `manifest.json`. Through the both of these sources, the component will know which icons to display to comply with legal requirements.
+
+| Name                       | Icon                                                                 | Needed property                                   | Condition                                                                         |
+|----------------------------|----------------------------------------------------------------------|---------------------------------------------------|-----------------------------------------------------------------------------------|
+| `cautionIcon`              | <img src={cautionIcon} width="64" />                                 | `date` or `versionDate`                           | Shown when `date` or `versionDate` is provided.                                   |
+| `companyAddressOutlineIcon`| <img src={companyAddressOutlineIcon} width="64" />                   | `date` or `versionDate`                           | Shown when `date` or `versionDate` is provided.                                   |
+| `companyAddressIcon`       | <img src={companyAddressIcon} width="64" />                          | `companyAddress` or `companyComplementaryAddress` | Shown when either `companyAddress` or `companyComplementaryAddress` are provided. |
+| `companyReferenceIcon`     | <img src={companyReferenceIcon} width="64" />                        | `companyReference`                                | Shown when `companyReference` is provided.                                        |
+| `LOTIcon`                  | <img src={LOTIcon} width="64" />                                     | `LOT`                                             | Shown when `LOT` is provided.                                                     |
+| `REFIcon`                  | <img src={REFIcon} width="64" />                                     | `REF`                                             | Shown when `REF` is provided.                                                     |
+| `UIDIcon`                  | <img src={UIDIcon} width="64" />                                     | `UID`                                             | Shown when `UID` is provided.                                                     |
+
+<Admonition type="note">
+ The property `versionDate` is deprecated in favor of `date`. It is being kept due to compatibility reasons. It will be removed in the next Oswald major release v7.0.0.
+</Admonition>
+
+### `manifest.json`
+
+The [`manifest.json`](../configuration/manifest.md) file must reside at the `public` directory of the application. This file is responsible for configuring the dynamic information displayed by the `AboutBox`. It can contain the following entries:
+
+| Property      | Type                  | Description                       |
+|---------------|-----------------------|-----------------------------------|
+| date          | string                | Product version release date.     |
+| dependencies  | ManifestDependency[]  | The manifest dependencies.        |
+| LOT           | string                | Unique product identifier.        |
+| REF           | string                | Product reference identifier.     |
+| UDI           | string                | Unique Device Identifier.         |
+| version       | string                | Product version.                  |
+| versionDate   | string                | Product version release date.     |
+
+<Admonition type="note">
+  The property `versionDate` is deprecated in favor of `date`. It is being kept due to compatibility reasons. It will be removed in the next Oswald major release v7.0.0.
+</Admonition>
+
+<Admonition type="note">
+  Oswald **is not responsible** for generating the `manifest.json`. This file must be created by the application's own DevOps process, following the appropriate business rules and versioning of the application.
+</Admonition>
+
+### Composing
+
+To compose and set the login which will be a part of the fragment, drop it through Oswald inside a fragment, and specify the authentication configuration routes by `setAuthenticationConfiguration` method or the editor authentication manager.
+
+#### Example
+
+Considering the following `manifest.json` file:
+
+<Details open summary={<summary>Example: <code>AboutBox dynamic information declaration</code></summary>}>
+  ```json5
+  {
+    "version": "3.07",
+    "date": "2022-11-25", // "versionDate": "2022-11-25"
+    "LOT": "3.07.1820.02",
+    "REF": "837002",
+    "UDI": "(01)00884838093287 (11) 221125 (10) 3.07.1820.02",
+  }
+  ```
+</Details>
+
+and the following configuration through the fragment controller: 
+
+<Details open summary={<summary>Example: <code>Custom mount and catch events handlers</code></summary>}>
+  ```tsx
+  import type { LoginAPI } from '@philips-internal/oswald-ui-components';
+  import Controller, { OnCatch, OnMount } from '@philips-internal/oswald-ui-core/lib/client';
+  import { MountEvent } from '@philips-internal/oswald-ui-core/lib/component/types';
+
+  import { ExampleAliases, FragmentNames } from '../../codegen';
+
+  @Controller({ fragment: FragmentNames.EXAMPLE })
+  class Example {
+
+    @OnMount(LoginAliases.MAIN_LOGIN)
+    onLoginMount(event: MountEvent): void {
+      const login = event.target as LoginAPI;
+
+      const localizedLabel = {
+        data: [
+          {
+            label: 'label A',
+            value: 'value A',
+          },
+          {
+            label: 'label B',
+            value: 'value B',
+          }
+        ],
+        label: 'Localized labels',
+      };
+
+      login.setAboutBoxProps({
+        companyComplementaryAddress: '',
+        localizedLabel,
+        messageExpression: '',
+        productSubtitle: '',
+        secondaryMessageExpression: '',
+        showQuantity: false,
+        versionExpression: '',
+      });
+    }
+
+    @OnCatch(LoginAliases.MAIN_LOGIN)
+    onCatch(event: PromiseEvent<Record<string, unknown>>): void {
+      const response = event.response.response as Response;
+      void response.json().then((content) => this.showNotification(content));
+    }
+  }
+  ```
+</Details>
+
+The final result will look like this:
+
+  <figure>
+    ![Oswald login with about box](./../../assets/components/login/login-with-about-box.gif)
+    <figcaption>Figure 1 - Oswald login with about box</figcaption>
+  </figure>
+
+A more complete exemple of the `Login` component can be found at Oswald's sample application [login screen](pathname:///../sample/application/login)

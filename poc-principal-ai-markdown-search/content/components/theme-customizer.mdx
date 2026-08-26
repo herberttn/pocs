@@ -1,0 +1,117 @@
+---
+sidebar_label: ThemeCustomizer
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `ThemeCustomizer`
+
+The `ThemeCustomizer` is a versatile component designed to provide users with the ability to customize the appearance of a web application. It allows for the creation of unique themes that reflect the brand identity of the application.
+
+## Usage
+
+Oswald provides a default fragment with the component and controller already set up. To use it, follow the steps described in the [theme customizer](../guides/editor/theme-customizer.mdx) guide.
+
+To compose and set the theme customization component from scratch, drop it through Oswald inside a `Form` component.
+
+Then, in the controller, listen to the form submit event to get the theme customization values and save them using the [`ThemeService.saveCustomTheme`](../services/theme-service.mdx#savecustomtheme) method.
+
+Once the theme is saved, register it using the [`ThemeService.registerCustomTheme`](../services/theme-service.mdx#registercustomtheme) method and apply it using the [`ThemeService.applyCustomTheme`](../services/theme-service.mdx#applycustomtheme) method.
+
+<Admonition type="important">
+  Use the `mapThemeCustomizerValueToCSS` utility function to convert the theme customization values into a CSS string to ensure it saves with the expected content when using the `ThemeService.saveCustomTheme` method.
+</Admonition>
+
+<Details open summary={<summary>Example: theme customizer controller</summary>}>
+  ```tsx
+import { FormAPI, ThemeService, ThemeTonalRange, ToastService } from '@philips-internal/oswald-ui-components';
+import type { ThemeCustomizerValue } from '@philips-internal/oswald-ui-components';
+import { ToastLevel } from '@philips-internal/oswald-ui-constants';
+import type { Value } from '@philips-internal/oswald-ui-core';
+import { Controller, OnMount, OnSubmit } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { MountEvent, SubmitEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { ConfigurationService, HttpService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import { mapThemeCustomizerValueToCSS } from '@philips-internal/oswald-ui-foundation';
+import { enumValues, isEmptyObject, isValidURL } from '@philips-internal/oswald-ui-utils';
+
+import { FragmentNames, OswThemeCustomizerAliases } from '../codegen/index.js';
+
+const themeId = 'some-theme';
+
+@Controller({ fragment: FragmentNames.OSW_THEME_CUSTOMIZER })
+class OswThemeCustomizerController {
+  @OnMount(OswThemeCustomizerAliases.FORM)
+  async onFormMount(event: MountEvent): Promise<void> {
+    const formAPI = event.target as FormAPI;
+
+    const customization = ConfigurationService.getCustomizationConfiguration();
+    const getVariablesEndpoint = customization?.getThemeVariablesEndpoint;
+
+    if (!getVariablesEndpoint) {
+      formAPI.setDisabled(true);
+      formAPI.setEditing(false, true);
+      throw new Error('[OswaldThemeCustomizerController]: No endpoint provided for theme variables');
+    }
+
+    try {
+      const data = await HttpService.get<Record<string, Value>>(getVariablesEndpoint, { themeId });
+
+      if (!data?.body) {
+        return;
+      }
+
+      formAPI.setRecord({
+        theme: data.body,
+      });
+    } catch {
+      formAPI.setDisabled(true);
+      formAPI.setEditing(false, true);
+      this.openErrorToast('oswald.theme-customizer.errors.failed-to-get-theme-variables');
+    }
+  }
+
+  openErrorToast(message: string): void {
+    ToastService.open({
+      dismissible: true,
+      id: 'theme-customizer-error',
+      level: ToastLevel.ERROR,
+      message,
+      showIcon: true,
+    });
+  }
+
+  @OnSubmit(OswThemeCustomizerAliases.FORM)
+  async onFormSubmit(event: SubmitEvent): Promise<void> {
+    const data = event.record.theme as ThemeCustomizerValue;
+    const css = mapThemeCustomizerValueToCSS(data);
+
+    if (isEmptyObject(data) || !isContentfulString(css)) {
+      try {
+        await ThemeService.deleteCustomTheme(themeId);
+      } catch {
+        this.openErrorToast('oswald.theme-customizer.errors.failed-to-delete-theme');
+      }
+
+      return;
+    }
+
+    try {
+      const response = await ThemeService.saveCustomTheme(themeId, css, data);
+
+      if (!response.body || !isValidURL(response.body)) {
+        return;
+      }
+
+      ThemeService.registerCustomTheme(themeId, response.body);
+
+      await ThemeService.applyCustomTheme(themeId);
+    } catch {
+      this.openErrorToast('oswald.theme-customizer.errors.failed-to-save-theme');
+    }
+  }
+}
+
+export default OswThemeCustomizerController;
+  ```
+</Details>

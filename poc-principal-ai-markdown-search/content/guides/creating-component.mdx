@@ -1,0 +1,335 @@
+---
+sidebar_label: Creating a component
+title: Creating a component
+---
+
+import Admonition from '@theme/Admonition';
+import CodeBlock from '@theme/CodeBlock';
+
+One of Oswald's key features is its extensibility, meaning that users have the ability to customize and expand the available catalog of components to fit their specific needs. Oswald achieves this by allowing users to create their own custom components, using established patterns that seamlessly integrate with the editor.
+
+This extensibility empowers users to build more complex and specialized applications, without being limited by the default set of components. By giving users the ability to create their own custom components, Oswald ensures that the editor remains flexible and adaptable to a wide range of use cases.
+
+Furthermore, Oswald's extensibility provides a platform for users to share their custom components with others, fostering a collaborative environment where developers can leverage each other's expertise and experience. This allows users to quickly and efficiently build applications that are tailored to their needs, without having to reinvent the wheel every time they encounter a new problem.
+
+To get started, let's take a simple component as an example, the component is called `Counter`.
+
+To define the `Counter` component, the underlying structure must follow Oswald's approach of defining the component style, typings, and implementation on distinct files, with a single file to export the component.
+
+### Typings
+
+To create a custom component in Oswald, it is necessary to include a typings file that defines the necessary types and properties for the component.
+
+The `CounterProps` interface is defined in this file, which enumerates all of the properties available to the component. The `CounterState` interface is also defined, which specifies all of the component's state properties. In addition, the `CounterProperties` object is utilized to define all of the properties available in the editor, along with their default values.
+
+To ensure that the component API works seamlessly, it is important to create the `CounterAPIState` interface, which combines all of the properties available through the component API. Similarly, the `CounterStateWithDefaultValues` interface should include all of the state values with their corresponding default values. Finally, the `CounterAPIStateWithDefaultValues` interface is created to combine all of the properties with default values available in the component API.
+
+```tsx title="/src/components/counter/counter-types.ts"
+import type { ReactNode } from 'react';
+
+import type { TextProps } from '@philips-internal/oswald-ui-components';
+import type { BaseAPIState } from '@philips-internal/oswald-ui-core';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { eventListener, expression, extendComponent, number, oneOfType, node, arrayOf, string } from '@philips-internal/oswald-ui-core/lib/component/prop-types/index.js';
+
+type CounterTextProps = Pick<TextProps, 'size' | 'type' |  'value'>;
+
+interface CounterProps {
+  /**
+   * The children of the component.
+   */
+  children?: ReactNode | ReactNode[];
+  /**
+   * The increment value of the component.
+   */
+  increment?: number;
+  /**
+   * The initial count value of the component.
+   */
+  initialCount?: number;
+  /**
+   * The label of the component.
+   */
+  label?: CounterTextProps;
+  /**
+   * The event listener for the component.
+   */
+  onClick?: (event: ClickEvent) => void;
+  /**
+   * The UUID of the component.
+   */
+  uuid?: string;
+}
+
+interface CounterState {
+  /**
+   * The count value of the component.
+   */
+  count: number;
+}
+
+interface CounterAPIState extends BaseAPIState, CounterProps, CounterState {}
+
+const CounterProperties = {
+  children: {
+    description: 'The child components to render inside the counter.',
+    type: oneOfType([node, arrayOf(node)]).notEnumerable(),
+  },
+  increment: {
+    defaultValue: 1,
+    description: 'The value used to increment the count on each click.',
+    type: number,
+  },
+  initialCount: {
+    defaultValue: 0,
+    description: 'The initial count value of the component.',
+    type: number,
+  },
+  label: {
+    defaultValue: {
+      value: 'oswald.counter.label',
+    },
+    description: 'The label of the component.',
+    type: extendComponent<TextProps>('Text', ['size', 'type', 'value'], ['alignment', 'className', 'formatters', 'sensitiveData']),
+  },
+  onClick: {
+    description: 'Callback function called when the component is clicked.',
+    type: eventListener,
+  },
+  uuid: {
+    defaultValue: '',
+    description: 'The unique identifier of the component.',
+    type: string.notEnumerable(),
+  },
+};
+
+export type {
+  CounterAPIState,
+  CounterProps,
+  CounterState,
+  CounterTextProps,
+};
+
+export {
+  CounterProperties,
+};
+```
+
+### API
+
+The component API is a critical part of Oswald components, enabling developers to interact with components through controllers. This feature makes it possible to use the component not only within Oswald-based applications but also with a pure React approach.
+
+The component API provides a standardized interface for components to communicate with other parts of the application, enabling developers to build complex, interactive applications with ease. By abstracting away the implementation details of the component, the API simplifies the development process, making it easier for developers to focus on building the application's core functionality.
+
+```tsx title="/src/components/counter/counter-api.ts"
+import { AwesomeEvent, ComponentAPI } from '@philips-internal/oswald-ui-core';
+import { Clickable, ClickEventListener } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { CounterProperties } from './counter-types.js';
+import type { CounterAPIState, CounterTextProps } from './counter-types.js';
+
+class CounterAPI extends ComponentAPI<CounterAPIState> implements Clickable {
+
+  @AwesomeEvent
+  onClick = new ClickEventListener();
+
+  /**
+   * Obtains the current component count.
+   */
+  getCount(): number {
+    return this.state.count;
+  }
+
+  /**
+   * Updates the component count value.
+   *
+   * @param count - The updated count value.
+   */
+  setCount(count: number): void {
+    this.setState({ count });
+  }
+
+  /**
+   * Obtains the value which increments the count on each click.
+   */
+  getIncrement(): number {
+    return this.state.increment ?? CounterProperties.increment.defaultValue;
+  }
+
+  /**
+   * Update the value used to increment the count on each click.
+   *
+   * @param increment - The updated increment value.
+   */
+  setIncrement(increment: number): void {
+    this.setState({ increment });
+  }
+
+  /**
+   * Obtains the initial count value of the component.
+   */
+  getInitialCount(): number {
+    return this.state.initialCount ?? CounterProperties.initialCount.defaultValue;
+  }
+
+  /**
+   * Updates the initial count used by the component.
+   *
+   * @param initialCount - The updated initial count value.
+   */
+  setInitialCount(initialCount: number): void {
+    this.setState({ initialCount });
+  }
+
+  /**
+   * Obtain the properties used to interact with the component label.
+   */
+  getLabel(): CounterTextProps {
+    return this.state.label ?? CounterProperties.label.defaultValue;
+  }
+
+  /**
+   * Updates the component label.
+   *
+   * @param label - The updated label properties.
+   */
+  setLabel(label: CounterTextProps): void {
+    this.setState({ label });
+  }
+}
+
+export {
+  CounterAPI,
+};
+```
+
+### Component
+
+After defining the necessary types and properties for the custom component in `counter-types.ts` and `counter-api.ts`, the component implementation can be proceeded with. 
+The implementation structure is the same as any other React component, with some important exceptions: 
+
+- Instead of the standard `useState` hook, the custom `useSharedState` hook is used, which is specifically designed for use within Oswald components. 
+This enables easy sharing of state between the component and its API, ensuring seamless operation within Oswald-based applications.
+
+- The `Container` component is used to wrap the component, which is used to allow dropping other Oswald components inside the `Counter` component.
+
+<Admonition type="important">
+  The component `uuid` property must be passed to the `Container` component.
+</Admonition>
+
+```tsx title="/src/components/counter/counter.tsx"
+import React from 'react';
+import type { ReactElement } from 'react';
+
+import { Button, Text } from '@philips-internal/oswald-ui-components';
+import { Container } from "@philips-internal/oswald-ui-core";
+import { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { useSharedState } from '@philips-internal/oswald-ui-engine';
+import { isFunction } from '@philips-internal/oswald-ui-utils';
+
+import { CounterAPI } from './counter-api.js';
+import { CounterProperties } from './counter-types.js';
+import type { CounterProps, CounterState } from './counter-types.js';
+
+import './counter.css';
+
+function Counter(props: CounterProps): ReactElement {
+  const {
+    children,
+    increment = CounterProperties.increment.defaultValue,
+    initialCount = CounterProperties.initialCount.defaultValue,
+    label = CounterProperties.label.defaultValue,
+    uuid = CounterProperties.uuid.defaultValue,
+  } = props;
+
+  const [count, setCount] = useSharedState<CounterState, CounterProps>({
+    initialValue: initialCount,
+    name: 'count',
+    props,
+  });
+
+  const increaseCount = (): void => {
+    setCount(previousCount => previousCount + increment);
+
+    if (isFunction(props.onClick)) {
+      props.onClick(new ClickEvent());
+    }
+  };
+
+  return (
+    <div className="c-counter">
+      <Text {...label} />
+      <span className="c-counter__value">{count}</span>
+
+      <Button onClick={increaseCount}>
+        Increment
+      </Button>
+
+      <Container className="c-counter__children" uuid={uuid}>
+        {children}
+      </Container>
+    </div>
+  );
+}
+
+export {
+  Counter,
+};
+```
+
+<Admonition type="important">
+  If your component has a `Container` to allow droppable content, and its children are rendered inside a loop, you must pass the `repeated` property to the `Container` component,
+  while also passing an `identifier` property down to the child component. Example:
+
+  ```tsx
+  import { propagateProps } from '@philips-internal/oswald-ui-utils';
+
+  <Container repeated uuid={uuid}>
+    {data.map(item => {
+      return propagateProps(props.children, {
+        identifier: item.id,
+        key: item.id,
+        // ... other props
+      });
+    })}
+  </Container>
+  ```
+</Admonition>
+
+### Exporting
+
+Once the custom component is defined and implemented, it must be exported along with its API and types. This step is critical for other developers to use the component in their applications and take advantage of its functionality.
+
+Exporting the component, API, and types makes them available for use in other areas of the application, allowing developers to create complex, interactive applications with ease. It also ensures that the component can be conveniently maintained and updated over time, as changes and improvements are made to the Oswald platform.
+
+In this step the component must also be registered with Oswald's catalog using the `AwesomeComponent` function. This step involves passing other crucial component information, such as its API, properties, and name, to ensure correct integration into the editor and availability for use by other developers.
+
+```tsx title="/src/components/counter/index.ts"
+import { AwesomeComponent, ComponentType } from '@philips-internal/oswald-ui-core';
+
+import { CounterAPI } from './counter-api.js';
+import { CounterProperties } from './counter-types.js';
+import { Counter } from './counter.js';
+
+const awesomeProperties = {
+  api: CounterAPI,
+  name: 'Counter',
+  properties: CounterProperties,
+  type: ComponentType.DATA_DISPLAY,
+};
+
+AwesomeComponent(awesomeProperties)(Counter);
+
+export * from './counter-types.js';
+
+export {
+  Counter,
+  CounterAPI,
+};
+```
+
+### Conclusion
+
+In conclusion, building custom components with Oswald is a powerful way to create highly customized, interactive applications that meet the unique needs of your users. By following the steps outlined in this guide, you can create custom components that seamlessly integrate with Oswald's platform, making it easier than ever to build complex applications with ease.
+
+Whether building a new application from scratch or adding new functionality to an existing one, custom components can help you achieve your goals more quickly and efficiently.

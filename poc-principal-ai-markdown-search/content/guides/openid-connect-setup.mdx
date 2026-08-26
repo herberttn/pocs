@@ -1,0 +1,54 @@
+---
+sidebar_label: OpenID Connect setup
+title: OpenID Connect setup
+---
+
+import CodeBlock from '@theme/CodeBlock';
+import Details from '@theme/Details';
+import keycloak_webm from './../../assets/guides/keycloak-openid-connect.webm';
+
+OpenID Connect (OIDC) is an identity layer built on top of the [OAuth 2.0](https://oauth.net/2/) framework. It allows third-party applications to verify the identity of the end-user and to obtain basic user profile information. OIDC uses [JSON web tokens (JWTs)](https://jwt.io/), which you can obtain using flows conforming to the [OAuth 2.0](https://oauth.net/2/) specifications.
+
+The authorization server will respond with a `code`, which the client can exchange for tokens on a secure channel. 
+
+You'll need to define the `openIDConnect` props in [setAuthenticationConfiguration](../services/configuration-service.mdx#setauthenticationconfiguration).
+
+### List of supported identity
+
+| Identity | Official documentation |
+| -------- | ---------------------- |
+| `Keycloak` | [https://www.keycloak.org/](https://www.keycloak.org/) |
+| `Drupal`   | [https://www.drupal.org/](https://www.drupal.org/)     |
+
+
+### Examples
+
+<Details summary={<summary>Keycloak</summary>}>
+  Users authenticate with Keycloak rather than individual applications. This means that your applications don't have to deal with login forms, authenticating users, and storing users. Once logged-in to Keycloak, users don't have to login again to access a different application.
+
+  This also applies to logout. Keycloak provides single-sign out, which means users only have to logout once to be logged-out of all applications that use Keycloak.
+
+  #### Params expecification:
+  | Parameter | Value | Required | Description |
+  |-----------|-------|----------|-------------|
+  | **redirect_uri**  |       | true | The redirect URI tells the issuer where to redirect the browser back to when the flow is done. |
+  | **client_id**     |       | true | Every client is identified by a client ID. Unlike a client secret, the client ID is a public value that does not have to be protected. |
+  | **response_type** | code  | true | Expected value from response type |
+  | **response_mode** | query | true | Expected value from response mode |
+
+  <br />
+  #### Final auth URI example:
+  ```
+    http://localhost:8080/realms/{my-realm}/protocol/openid-connect/auth?
+      client_id=sample-app
+      &redirect_uri=https%3A%2F%2Flocalhost%3A3009%2Fmy-custom-route
+      &response_type=code
+      &response_mode=query
+  ```
+
+  <br />
+  Video 1 - Keycloak authentication result
+  <video width="100%" controls>
+    <source src={keycloak_webm} type="video/webm" />
+  </video>
+</Details>

@@ -1,0 +1,209 @@
+---
+title: Formatters
+sidebar_label: Formatters
+---
+
+import Admonition from '@theme/Admonition';
+
+Formatters are utilities that transform data between two representations: a **raw value** (how data is stored) and a **formatted string** (how data is displayed to users). They handle both directions of this transformation, ensuring data consistency throughout your application.
+
+When building applications, data often needs to be displayed in a human-friendly format that differs from how it's stored. For example:
+
+* **Numeric identifiers**: Transform raw numbers into structured, readable formats with separators and patterns
+* **Currency values**: Present monetary amounts with appropriate symbols and locale-specific formatting
+* **Date values**: Convert stored dates into locale-appropriate display formats
+* **Contact information**: Structure raw data into standardized, readable patterns
+
+Without formatters, this transformation logic would need to be written repeatedly throughout the codebase, leading to:
+
+* **Inconsistent formatting**: Different parts of your app might format the same data type differently
+* **Code duplication**: The same formatting logic repeated in multiple places
+* **Maintenance burden**: Changes to formatting rules require updates in many locations
+* **Parsing errors**: Converting formatted strings back to raw values becomes error-prone
+
+Formatters solve these problems by centralizing formatting and parsing logic in reusable utilities.
+
+### How Formatters Work
+
+Every formatter provides four core capabilities:
+
+#### 1. Formatting (Raw → Display)
+
+Transforms raw data into a formatted string for display:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const formatted = ModelService.format('postal-code', 12345678);
+// Result: "12345-678"
+```
+
+#### 2. Parsing (Display → Raw)
+
+Converts formatted strings back to raw values:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const parsed = ModelService.parse('postal-code', '12345-678');
+// Result: 12345678
+```
+
+#### 3. Pattern Generation
+
+Provides a regex pattern that describes the valid format:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const pattern = ModelService.getFormatterPattern('postal-code');
+// Result: "^\d{5}-\d{3}$" (5 digits, dash, 3 digits)
+```
+
+This pattern can be used for input validation or to create input masks.
+
+#### 4. Validation
+
+Validates whether a value is properly formatted:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const result = await ModelService.validate('12345-678')
+  .apply('postal-code')
+  .run();
+
+// Result: [{ valid: true, name: 'postal-code', message: '' }]
+```
+
+### Built-in Formatters
+
+Oswald provides several formatters out of the box in the `@philips-internal/oswald-ui-model` package:
+
+* **`date`**: Date formatting with locale support
+* **`digit`**: Numeric digits only
+* **`currency`**: Currency formatting with locale-aware symbols
+* **`float`**: Floating point numbers
+* **`integer`**: Integer numbers with optional thousands separator
+* **`numeric`**: General numeric formatting
+* **`cnpj`**: Brazilian CNPJ (company ID) formatting
+* **`person-id`**: Person ID/CPF formatting
+* **`postal-code`**: Brazilian postal code (CEP) formatting
+
+### Using Formatters in Your Application
+
+#### In Controllers
+
+Formatters can be used to transform data before displaying it or storing it:
+
+```tsx
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  async onSubmit(): void {
+    const formattedPostalCode = '12345-678';
+
+    const rawPostalCode = ModelService.parse('postal-code', formattedPostalCode);
+
+    await this.saveAddress({ postalCode: rawPostalCode });
+
+    const displayValue = ModelService.format('postal-code', rawPostalCode);
+  }
+}
+```
+
+### Formatter Options
+
+Many formatters accept configuration options to customize their behavior:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const dateFormatted = ModelService.format('date', '2024-11-11', {
+  type: 'longDate',
+});
+```
+
+Available options vary by formatter. Check the specific formatter documentation for details.
+
+### Creating Custom Formatters
+
+If the built-in formatters don't meet the application's needs, custom formatters can be created. This is useful when there are:
+
+* **Domain-specific data types**: Data formats unique to your business domain
+* **Legacy system formats**: Specific formatting requirements from existing systems
+* **Specialized validation rules**: Custom validation logic beyond what built-in formatters provide
+
+<Admonition type="tip">
+Learn how to create custom formatters in the [Creating a Formatter](/guides/creating-formatter) guide.
+</Admonition>
+
+### Best Practices
+
+**Always format for display**: Don't show raw values to users. Always use formatters to ensure consistent, locale-appropriate display.
+
+```tsx
+// ❌ Bad: Showing raw value
+textAPI.setValue(rawPostalCode);
+
+// ✅ Good: Showing formatted value
+textAPI.setValue(ModelService.format('postal-code', rawPostalCode));
+```
+
+**Always parse before storing**: Convert formatted user input back to raw values before saving to databases or APIs.
+
+```tsx
+// ❌ Bad: Storing formatted value
+await AddressService.saveAddress({ postalCode: '12345-678' });
+
+// ✅ Good: Storing raw value
+const rawPostalCode = ModelService.parse('postal-code', '12345-678');
+await AddressService.saveAddress({ postalCode: rawPostalCode });
+```
+
+**Use formatters consistently**: Don't mix formatting approaches. If you use a formatter once for a data type, use it everywhere for that type.
+
+### Formatters vs Validators
+
+While formatters include validation logic, they serve different purposes:
+
+* **Formatters**: Transform data between representations AND validate the format
+* **Validators**: Only validate data without transforming it
+
+Use formatters when you need both formatting and validation. Use validators when you only need to check constraints (like required fields, minimum length, etc.).
+
+See the [Validators](./validators.mdx) documentation for more information.
+
+### Common Use Cases
+
+**Data Display**: Format data received from APIs before displaying:
+
+```tsx
+async loadUserData(): Promise<void> {
+  const user = await UserService.getUser();
+
+  const displayData = ModelService.formatProps(
+    user,
+    ['postalCode', 'cpf', 'phone'],
+    {
+      postalCode: { name: 'postal-code' },
+      cpf: { name: 'person-id' },
+      phone: { name: 'phone-number' },
+    }
+  );
+
+  this.displayUser(displayData);
+}
+```
+
+### Related Resources
+
+* [Creating Custom Formatters](/guides/creating-formatter) - Step-by-step guide to creating your own formatters
+* [ModelService](/services/model-service) - Complete API reference for the ModelService
+* [Validators](./validators.mdx) - Learn about data validation without formatting

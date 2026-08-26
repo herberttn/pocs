@@ -1,0 +1,59 @@
+---
+sidebar_label: Analytics
+---
+
+import Details from '@theme/Details';
+
+# `Analytics`
+
+The `Analytics` component helps developers by loading analytics related scripts based on a given provider and its ID.
+
+### Properties
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `provider` | `AnalyticsProvider` | The provider used to load the script
+| `id` | `string` | Use to set the client ID
+
+### Methods
+
+| Method | Description |
+| -------- | ----------- |
+| `getId` | Obtains the current component id
+| `setId` | Updates the component id value
+| `getProvider` | Obtains the current component provider
+| `setProvider` | Updates the component provider value
+
+### Providers
+
+List of supported providers
+
+| Provider | Official documentation |
+| --------- | ----------- |
+| `Google Analytics` | [https://developers.google.com/analytics/devguides/collection/ga4](https://developers.google.com/analytics/devguides/collection/ga4) |
+
+### Set up events
+
+The component's only responsible for loading the provider analytics scripts, for adding and triggering events, developers will have to interact with the APIs provided by it, for example:
+
+<Details open summary={<summary>Example: <code>Creating custom event</code></summary>}>
+  ```tsx
+  @Controller({ fragment: FragmentNames.MY_FRAGMENT })
+  class MyController {
+
+    @OnClick(Aliases.ADD_CUSTOM_EVENT)
+    onClick(): void {
+      window.dataLayer = window.dataLayer || [];
+
+      const gtag = ({ ...args }: (string | Date)[]): void => {
+        window.dataLayer.push(args);
+      };
+
+      gtag(['js', new Date()]);
+      gtag(['config', 'G-XXXXXXXXXX']);
+    }
+  }
+  ```
+</Details>
+
+A full example of the component being used can be found in Oswald's [sample application](pathname:///../sample/application/analytics).

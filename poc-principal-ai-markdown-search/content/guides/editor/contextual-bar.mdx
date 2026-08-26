@@ -1,0 +1,236 @@
+---
+title: Contextual Bar
+sidebar_label: Contextual Bar
+---
+
+import Details from '@theme/Details';
+
+Oswald provides the `ContextualBar` component, that is a type of contextual action bar containing a small set of relevant actions related to a content.
+The component consists of two areas, one for actions and another for content.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `ContextualBar` a fragment with the component `Layout` will be used.  
+
+<figure>
+  ![Initial Tree](./../../../assets/guides/contextual-bar/contextual-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+To add the events for the actions, you can check the [Codegen](./codegen.mdx) guide for creating the controller.
+
+### How to use
+
+  1. In the components tab, search for `ContextualBar` and drag it into the `Layout`. Change the property `alias` to `main-contextual-bar`.
+  <figure>
+  ![Create ContextualBar](./../../../assets/guides/contextual-bar/create-contextualbar.gif)
+  <figcaption>Figure 2 - Create ContextualBar</figcaption>
+  </figure>
+
+  2. As mentioned before, `ContextualBar` component has two areas, one for the actions and another for content. The following structure is displayed in the Tree tab.
+  <figure>
+  ![ContextualBar Tree](./../../../assets/guides/contextual-bar/contextual-tree.png)
+  <figcaption>Figure 3 - ContextualBar Tree</figcaption>
+  </figure>
+
+  3. Change the property `title` of the `main-contextual-bar` to `Contextual Bar`. 
+  
+  4. Working first with the actions, in `Components` tab search for `Action` and drag it into the `actions` area. 
+  <figure>
+  ![Create Action](./../../../assets/guides/contextual-bar/contextual-first-action.gif)
+  <figcaption>Figure 4 - Create Action</figcaption>
+  </figure>
+
+  5. Select the `Action` component that we added in the previous step and click on the `Properties` tab.
+   Change the properties of the `Action` component to:
+    - `alias` = `action-edit`
+    - `buttonTheme` = `primary`
+    - `style` = `text`
+    - `text` = `Edit`
+
+  6. To add a button with an icon, include a new `Action` component. Change the properties of the new `Action` component to: 
+    - `alias` = `second-action`
+    - `buttonTheme` = `secondary`
+    - `icon` = `/static/assets/philips-shield.svg` or another.
+    - `iconPlacement` = `left`    
+    - `style` = `button`
+    - `text` = `Second Action`
+  
+  <figure>
+  ![ContextualBar Second Action](./../../../assets/guides/contextual-bar/contextual-second-action.png)
+  <figcaption>Figure 5 - ContextualBar Second Action</figcaption>
+  </figure>
+
+  7. To show a button just with the icon, change the `style` property to `icon`:
+  <figure>
+  ![ContextualBar Icon Action](./../../../assets/guides/contextual-bar/contextual-icon-action.png)
+  <figcaption>Figure 6 - ContextualBar Icon Action</figcaption>
+  </figure>
+
+  8. To add a button as Dropdown, include a new `Action` component. Change the properties of the new `Action` component to: 
+    - `alias` = `dropdown-action`
+    - `buttonTheme` = `primary`
+    - `style` = `dropdown`
+    - `text` = `Dropdown`
+
+  9. In the components tab, search for `ActionOption` and drag it into the `dropdown-action`. It's possible to include how many actions are necessary and even options with subactions.
+  <figure>
+  ![Create ActionOption](./../../../assets/guides/contextual-bar/contextual-actionoption.gif)
+  <figcaption>Figure 7 - Create ActionOption</figcaption>
+  </figure>
+
+  10. Change the `alias` property of the `ActionOption` to `first-option` and the `text` property to `First option`.
+  <figure>
+  ![First Dropdown Option](./../../../assets/guides/contextual-bar/contextual-first-dropdown-option.png)
+  <figcaption>Figure 8 - First Dropdown Option</figcaption>
+  </figure>
+
+  11. On `content` area, include a new `Layout` component with one row and one column. Change the `alias` property to `layout-content`.
+  <figure>
+  ![ContextualBar content area](./../../../assets/guides/contextual-bar/contextual-content-area.gif)
+  <figcaption>Figure 9 - ContextualBar Content Area</figcaption>
+  </figure>
+
+  12. In the components tab, search for `Card` and drag it into the `Layout` > `content` area. Change the property `alias` to `card-content`.
+  <figure>
+  ![ContextualBar Layout](./../../../assets/guides/contextual-bar/contextual-layout-card.gif)
+  <figcaption>Figure 10 - ContextualBar Layout</figcaption>
+  </figure>
+
+  13. Inside the `Card` content, include a `Panel` and a `Text` component.
+  <figure>
+  ![ContextualBar Panel](./../../../assets/guides/contextual-bar/contextual-panel.gif)
+  <figcaption>Figure 11 - ContextualBar Panel</figcaption>
+  </figure>
+
+  14. Change the `alias` property of the `Panel` component to `panel-card-content` and for `Text` to `text-card-content`. The following structure is displayed in the Tree tab.
+  <figure>
+  ![ContextualBar Final Tree](./../../../assets/guides/contextual-bar/contextual-final-tree.png)
+  <figcaption>Figure 12 - ContextualBar Final Tree</figcaption>
+  </figure>
+
+  15. To preview the result, select `Toggles mode between: editing, previewing` in the Editor.
+  <figure>
+  ![ContextualBar Preview](./../../../assets/guides/contextual-bar/contextualbar-preview.png)
+  <figcaption>Figure 13 - ContextualBar Preview</figcaption>
+  </figure>
+
+  16. ContextualBar will be shown as follow:
+  <figure>
+  ![ContextualBar Final Preview](./../../../assets/guides/contextual-bar/contextualbar-final-preview.gif)
+  <figcaption>Figure 14 - ContextualBar Final Preview</figcaption>
+  </figure>
+
+<Details summary={<summary><code>contextualbar.osw</code></summary>}>
+```json  
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout",
+      "uuid": "b3d88c19-7e84-44cd-9dc4-9c44ad699b6c",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "ContextualBar",
+        "props": {
+          "alias": "main-contextual-bar",
+          "uuid": "bce680f1-a7ff-478b-9b8d-71073c16b776",
+          "slot": "content",
+          "title": "Contextual Bar"
+        },
+        "children": [
+          {
+            "type": "Action",
+            "props": {
+              "alias": "action-edit",
+              "uuid": "f0d208fe-d1ba-483f-b198-efbce688ee2a",
+              "text": "Edit",
+              "style": "text",
+              "slot": "actions"
+            }
+          },
+          {
+            "type": "Action",
+            "props": {
+              "alias": "second-action",
+              "uuid": "52144c2b-6c6f-4634-b624-88f9231e56c5",
+              "text": "Second Action",
+              "buttonTheme": "secondary",
+              "style": "icon",
+              "slot": "actions",
+              "icon": "/static/assets/philips-shield.svg"
+            }
+          },
+          {
+            "type": "Action",
+            "props": {
+              "alias": "dropdown-action",
+              "uuid": "6b6ada0b-885e-47ad-b456-fcea9f474296",
+              "text": "Dropdown",
+              "style": "dropdown",
+              "slot": "actions"
+            },
+            "children": [
+              {
+                "type": "ActionOption",
+                "props": {
+                  "alias": "first-option",
+                  "uuid": "f6bcba01-1e0f-4e45-aa5e-890e54bda7e3",
+                  "text": "First option"
+                }
+              }
+            ]
+          },
+          {
+            "type": "Layout",
+            "props": {
+              "alias": "layout-content",
+              "uuid": "67892aff-2dbe-40fd-a9c9-22de11cd487b",
+              "columns": "auto",
+              "rows": "auto",
+              "slot": "content",
+              "templateAreas": "\"content\""
+            },
+            "children": [
+              {
+                "type": "Card",
+                "props": {
+                  "alias": "card-content",
+                  "uuid": "0585c3cc-25b2-4998-8c72-471052ede971",
+                  "slot": "content"
+                },
+                "children": [
+                  {
+                    "type": "Panel",
+                    "props": {
+                      "alias": "panel-card-content",
+                      "uuid": "d945784e-41f9-4174-9085-59458b960d70"
+                    },
+                    "children": [
+                      {
+                        "type": "Text",
+                        "props": {
+                          "alias": "text-card-content",
+                          "uuid": "63e3102f-5c9a-4e21-bebf-965fc9217f8f",
+                          "value": "Data to be manipulated by actions"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "contextualbar"
+}
+```
+</Details>

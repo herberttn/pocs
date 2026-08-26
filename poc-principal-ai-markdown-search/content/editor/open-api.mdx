@@ -1,0 +1,69 @@
+---
+title: OpenAPI
+sidebar_label: OpenAPI
+---
+
+import openAPIFetch from './../../assets/editor/open-api/open-api-fetch.mp4';
+import openAPIMapper from './../../assets/editor/open-api/open-api-mapper.mp4';
+
+The OpenAPI Schema Integration feature enables linking existing OpenAPI schema endpoints through the Oswald editor preferences. When connected, this feature extends the editor's functionality in two key ways:
+
+1. It provides search capabilities for specific endpoints defined in the schema
+2. It makes schema response fields available when configuring components, specifically for editor nodes that have a parent which uses an OpenAPI path as its endpoint
+
+### How It Works
+
+When an OpenAPI schema is linked in the editor preferences, Oswald parses the schema definition to understand available endpoints and their response structures. This integration provides context-aware assistance during development by making API information readily available.
+
+### Benefits
+
+* Streamlined API discovery through in-editor endpoint search
+* Simplified component configuration using schema response fields
+* Reduced context switching between documentation and implementation
+* Improved accuracy when working with API responses
+
+### Getting Started
+
+To enable this feature, the OpenAPI schema endpoint must be specified in the editor preferences menu. Once configured, enhanced functionalities become available throughout the editor interface.
+
+<figure>
+  ![Snippets Context Menu](./../../assets/editor/open-api/editor-preferences-menu.png)
+  <figcaption>Figure 1 - Editor Preferences menu opened within Oswald</figcaption>
+</figure>
+
+### Examples
+
+#### API Endpoint Configuration
+
+The first example demonstrates the endpoint configuration process in a ⁠Fetch component:
+
+1. Upon opening the endpoint configuration dialog, an enhanced search interface appears
+2. The interface displays available endpoints from the linked OpenAPI schema
+3. Selecting an endpoint automatically populates the URL field with the correct path
+4. Parameter fields are dynamically generated based on the schema definition
+
+This schema-aware approach eliminates the need to manually reference API documentation when configuring endpoints.
+
+<figure>
+  <video controls width="100%">
+    <source src={openAPIFetch}/>
+  </video>
+  <figcaption>Figure 2 - Interacting with OpenAPI endpoints.</figcaption>
+</figure>
+
+#### Response Data Mapping
+
+The second example illustrates how the Mapper component leverages schema-defined response structures:
+
+1. When configuring a Mapper connected to a parent component with an OpenAPI path
+2. The editor displays available response fields based on the schema definition
+3. Auto-completion suggestions appear when entering field paths
+
+This intelligent mapping reduces errors and accelerates development by providing accurate insight into API response structures without requiring manual documentation review.
+
+<figure>
+  <video controls width="100%">
+    <source src={openAPIMapper}/>
+  </video>
+  <figcaption>Figure 3 - Interacting with OpenAPI responses.</figcaption>
+</figure>

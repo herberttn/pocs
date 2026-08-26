@@ -1,0 +1,60 @@
+---
+sidebar_label: Vitest
+---
+
+import Admonition from '@theme/Admonition';
+
+# Vitest tests
+Unit testing is the practice of testing individual units of code, such as functions or methods, to ensure that they are working as intended. They are usually written by developers as they write the code, and they are run frequently, such as every time the code is changed or built.
+
+The goal of unit testing is to catch bugs and other issues early in the development process, before they become more difficult and costly to fix. By writing tests for individual units of code, developers can make sure that changes to the codebase don't break existing functionality and that new features are working as expected.
+
+The practice of unit testing makes it easier to ensure that code changes don't break the existing functionality and to catch bugs early in the development process.
+
+## Requirements
+- Test files location have to match `test/**/*.test-vitest.{js,mjs,ts,mts,jsx,tsx}`
+
+## Running tests
+Oswald provides a build-in and pre-configured unit tests runner, which leverages Oswald's builder, [`vite`](https://www.npmjs.com/package/vite) and [`vitest`](https://www.npmjs.com/package/vitest). The goal is to lower the entry barrier to unit testing, by providing a way to run tests without any setup and configuration.
+
+The command to run vitest tests is built into Oswald's cli.
+
+> See: [`oswald test vitest`](../cli/oswald-test.md#oswald-test-vitest) for arguments and examples.
+
+## Writing tests
+In this example the file location is `test/components/text.test.tsx`
+
+```tsx
+import { cleanup, render } from '@testing-library/react';
+
+import { Text } from '../../../src/components/text/index.js';
+
+describe('Text component', () => {
+  afterEach(cleanup);
+
+  test('Should render text component with value', () => {
+    const text = 'content';
+    const { queryByText } = render(
+      <Text value={text} />
+    );
+
+    expect(queryByText(text)).toBeDefined();
+  });
+});
+```
+
+## Reporters
+
+### Reporting results
+Different result reports can be generated through the `--reporters` flag available in [`oswald test vitest`](../cli/oswald-test.md#oswald-test-vitest).
+
+> Reports will be found under `.oswald/reports/tests/vitest/results`
+
+<Admonition type="note">
+  Not all reporters will generate files, some of them just change the terminal output.
+</Admonition>
+
+### Reporting coverage
+Different coverage reports can be generated through the `--coverage-reporters` flag available in [`oswald test vitest`](../cli/oswald-test.md#oswald-test-vitest).
+
+> Reports will be found under `.oswald/reports/tests/vitest/coverage`

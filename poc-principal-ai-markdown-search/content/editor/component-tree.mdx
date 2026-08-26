@@ -1,0 +1,179 @@
+---
+title: Component Tree
+sidebar_label: Component Tree
+---
+
+import Admonition from '@theme/Admonition';
+import componentTreeSearch from './../../assets/editor/component-tree/component-tree-search.mp4';
+
+# Component Tree
+
+## Overview
+
+The Component Tree is a panel in the Oswald editor that displays the hierarchical structure of your fragment's components. It provides a visual representation of how components are nested and organized, making it easy to navigate complex fragments and understand component relationships.
+
+## What You'll See
+
+The tree displays your application's component hierarchy, including:
+- Component names and aliases
+- Nested structures showing parent-child relationships
+- Component regions when applicable
+- Visual indicators showing component rendering state (locale/breakpoint visibility), with legends explaining each indicator
+- Actions at the top of the tree panel
+
+<figure>
+  ![Oswald's component tree](./../../assets/editor/component-tree/component-tree.png)
+  <figcaption>Figure 1 - Oswald's component tree.</figcaption>
+</figure>
+
+## Navigating the Tree
+
+### Selecting Components
+
+**Click** any component in the tree to select it. The selected component will:
+- Be highlighted in the tree
+- Display its properties in the properties panel
+
+### Expanding and Collapsing
+
+**Double-click** a component or **click the arrow icon** next to it to expand or collapse its children. This helps you focus on specific parts of your component hierarchy.
+
+### Quick Actions Toolbar
+
+At the top of the tree panel, you'll find buttons to:
+- **Toggle non rendered nodes visibility** - Toggle visibility of components that aren't rendered in the current context
+- **Expand All** - Opens all collapsed nodes at once
+- **Collapse All** - Closes all expanded nodes for a cleaner view
+
+## Component Context Actions
+
+When you right-click a component in the tree, a context menu appears with actions that depend on the selected component and editor state. These actions are grouped for clarity:
+
+### Controller Injection
+- **Create component @Inject**: Adds an `@Inject` for the selected component into the fragment controller.
+  - Disabled when the fragment has no controller or an implementation already exists for this component.
+- **Go to component @Inject**: Opens the controller at the existing injection for the selected component.
+  - Disabled when the fragment has no controller or no implementation exists yet.
+
+### Component Management
+- **Add Component**: Adds a child component to the selected component.
+  - Disabled when the component cannot contain children or the fragment is read-only.
+- **Move to...**: Moves the selected component under another valid parent.
+  - Disabled for the root component, read-only fragments, or slot placeholders.
+- **Delete**: Removes the selected component from the fragment.
+  - Disabled for the root component, read-only fragments, or slot placeholders.
+- **Copy**: Copies the selected component to the clipboard, preserving all its properties and children.
+  - Disabled for slot placeholders.
+  - Keyboard shortcut: `Ctrl+C` (Windows/Linux) or `Cmd+C` (Mac)
+- **Cut**: Cuts the selected component to the clipboard and removes it from the fragment.
+  - Disabled for slot placeholders.
+  - Keyboard shortcut: `Ctrl+X` (Windows/Linux) or `Cmd+X` (Mac)
+- **Paste**: Pastes a component from the clipboard as a child of the selected component.
+  - Only works when the clipboard contains a valid component and the target can accept children of that type.
+  - Keyboard shortcut: `Ctrl+V` (Windows/Linux) or `Cmd+V` (Mac)
+
+### Snippets
+- **Snippets**: Opens a submenu with available component snippets compatible with the selected component's type. Choosing a snippet will prompt for any required configuration and then apply it to the component.
+
+For more information on snippets, see the [Component Snippets](./snippets/component-snippets) documentation.
+
+## Reorganizing Components
+
+You can rearrange components using drag and drop:
+
+1. **Click and hold** on a component you want to move
+2. **Drag** it to a new location in the tree
+3. Drop zones will **highlight** with a white border
+4. **Release** to drop the component in its new location
+
+Alternatively, use the **"Move to..."** action from the component context menu (see ["Component Context Actions"](#component-context-actions)).
+
+<Admonition type="note"> 
+Components can only be moved to valid parent containers. The editor will prevent invalid moves that would break your application structure.
+</Admonition>
+
+## Searching the Tree
+
+The component tree includes a search feature to help you quickly find components in complex hierarchies.
+
+### Using the Search Box
+
+At the top of the tree panel, you'll find a search input. You can interact with it in two ways:
+
+1. **Click directly on the search box** and start typing
+2. **Click anywhere in the list of components** and start typing
+
+As you type, matching components are highlighted in the tree in real-time. If no matches are found, the search box will display a red border to indicate an invalid search.
+
+<figure>
+  <video controls width="100%">
+    <source src={componentTreeSearch}/>
+  </video>
+  <figcaption>Figure 2 - Searching the component tree.</figcaption>
+</figure>
+
+### Navigating Search Results
+
+Once you have matching components:
+
+- Press **Arrow Down** to move to the next matching component
+- Press **Arrow Up** to move to the previous matching component
+
+### Clearing the Search
+
+- Press **ESC** to clear the search and reset the view
+- Click the **X button** in the search box to clear the current search term
+
+### Search Tips
+
+- Search is case-insensitive
+- You can search by component name or alias
+- Matching components are highlighted as you type
+- Use descriptive component aliases to make searching easier
+
+## Working with Locales and Breakpoints
+
+In Oswald, component properties can vary by locale and breakpoint, including whether the component is rendered.
+
+By default, the tree shows all components, regardless of the selected locale or breakpoint. 
+Components that have specific render rules are highlighted with different colors, which you can identify by checking the legends at the bottom of the tree (as shown in Figure 1).
+
+To see exactly what users will see, toggle the "Show all" button in the tree quick actions toolbar to hide non-rendered components.
+
+## Component Regions
+
+Some components have named regions where child components can be placed. These appear in the tree as:
+
+- **Pre-defined regions** like "header", "content", or "footer". E.g. `ContextualBar` `actions` and `content` slots;
+- **User-defined regions**, identified by the defined name. E.g. `Layout` areas created through the editor;
+- **Unnamed regions**, identified as `Children`.
+
+When you expand a component with regions, you'll see its children organized by their assigned slot.
+
+<figure>
+  ![Example of component regions being displayed in the tree](./../../assets/editor/component-tree/component-regions.png)
+  <figcaption>Figure 3 - `Layout` and `ContextualBar` regions</figcaption>
+</figure>
+
+## Tips and Tricks
+
+### Quickly Navigate Large Trees
+- Use **Collapse All** to reset your view, then expand only the sections you need
+- Component aliases make searching easier - use descriptive names
+
+## Common Questions
+
+### Why can't I see some components?
+
+Click **Show all** in the toolbar to see all components, including those hidden in the current view.
+
+### What do the different colors mean?
+
+Each color indicates a different component state related to locales and breakpoints. Click the **"Show legends"** button at the bottom of the tree to see a complete explanation.
+
+### Why can't I drag a component somewhere?
+
+Components can only be placed in valid locations. The editor enforces structural rules to keep your application working correctly. If you can't drop a component, try:
+- Dropping it into a named region instead of directly on a component
+- Checking if the parent component accepts that type of child
+- Ensuring you're not trying to drop a component onto itself

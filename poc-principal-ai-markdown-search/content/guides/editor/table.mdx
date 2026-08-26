@@ -1,0 +1,347 @@
+---
+title: Table
+sidebar_label: Table
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+For scenarios where data needs to be presented in a table, Oswald provides the `Table` component, which includes customizable `TableColumn` elements to cover diverse use cases.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start using the `Table`, a fragment with the components `ContextualBar` and `Fetch` will be used.  
+
+### How to use
+
+  1. In the components tab, search for `Table` and drag it into the content area of the `ContextualBar`.
+
+  <figure>
+    ![Create a Table](./../../../assets/guides/table/create-table.gif)
+    <figcaption>Figure 1 - Create a Table</figcaption>
+  </figure>
+
+  2. With the `Table` selected, in the properties tab, set the `keyField` to the property that will be used to identify each item in the `data`, in this case `id`, and the `withExpandedIndicator` to `false`.
+
+  3. In the components tab, search for `TableColumn` and drag it into the `Table`.
+
+  4. Repeat the above step to create additional columns. Then, configure the columns in the Properties tab as follows:
+
+| type | alias | value | entry | alignment | width |
+| ---- | ----- | :---: | :---: | :-------: | :---: |
+| default | table-column-name | Name | name | left | 150px |
+| default | table-column-job | Job | job | left | 150px |
+| superscription | table-column-status | Status | status | left | 70px |
+| superscription_bar | table-column-legend | - | legend | center | 0px |
+| dynamic | table-column-dynamic | Dynamic | dynamic | center | 120px |
+| checkbox | table-column-active | Active | active | center | 100px |
+
+  The tree should now look like this:
+
+  <figure>
+    ![Table initial tree](./../../../assets/guides/table/table-initial-tree.png)
+    <figcaption>Figure 2 - Table initial tree</figcaption>
+  </figure>
+
+  5. For the superscription columns, it is also necessary to configure how the superscription will be displayed for each possible value. First, select the `table-column-status` and in the properties tab, add two superscription items:
+
+  - First item: select the color `green`, set the `label` to `Good` and the `value` to `good`.
+  - Second item: select the color `red`, set the `label` to `Bad` and the `value` to `bad`.
+
+  <figure>
+    ![Configure the status superscription](./../../../assets/guides/table/table-status-superscription.gif)
+    <figcaption>Figure 3 - Configure the status superscription</figcaption>
+  </figure>
+
+  6. Similarly, configure the `table-column-legend` with the following superscription items:
+
+  - First item: select the color `blue`, set the `label` to `Foo` and the `value` to `foo`.
+  - Second item: select the color `yellow`, set the `label` to `Bar` and the `value` to `bar`.
+  - Third item: select the color `pink`, set the `label` to `Baz` and the `value` to `baz`.
+
+  <figure>
+    ![Configure the legend superscription](./../../../assets/guides/table/table-legend-superscription.gif)
+    <figcaption>Figure 3 - Configure the legend superscription</figcaption>
+  </figure>
+
+  7. To populate the table, the `Fetch` component was configured to fetch data from the samples mock API. It returns the following data:
+
+<Details open={false} summary={<summary>Mocked people data</summary>}>
+```json5
+[
+  { id: 1, name: 'Alice Smith', job: 'Teacher', status: 'good', legend: 'foo', active: true },
+  { id: 2, name: 'Bob Johnson', job: 'Doctor', status: 'bad', legend: 'bar', active: false },
+  { id: 3, name: 'Charlie Brown', job: 'Engineer', status: 'good', legend: 'baz', active: true },
+  { id: 4, name: 'Daisy Evans', job: 'Doctor', status: 'good', legend: 'foo', active: false },
+  { id: 5, name: 'Ethan Davis', job: 'Chef', status: 'bad', legend: 'bar', active: true },
+  { id: 6, name: 'Fiona Clarke', job: 'Engineer', status: 'good', legend: 'baz', active: true },
+  { id: 7, name: 'George Harris', job: 'Lawyer', status: 'bad', legend: 'foo', active: false },
+  { id: 8, name: 'Hannah Lewis', job: 'Teacher', status: 'good', legend: 'bar', active: true },
+  { id: 9, name: 'Ian Wright', job: 'Pilot', status: 'bad', legend: 'baz', active: false },
+  { id: 10, name: 'Julia Green', job: 'Scientist', status: 'good', legend: 'foo', active: true },
+  { id: 11, name: 'Kevin Adams', job: 'Chef', status: 'bad', legend: 'bar', active: true },
+  { id: 12, name: 'Lily Carter', job: 'Engineer', status: 'good', legend: 'baz', active: false },
+  { id: 13, name: 'Michael Scott', job: 'Manager', status: 'good', legend: 'foo', active: true },
+  { id: 14, name: 'Nora Taylor', job: 'Writer', status: 'bad', legend: 'bar', active: false },
+  { id: 15, name: 'Oscar Reed', job: 'Technician', status: 'good', legend: 'baz', active: true },
+  { id: 16, name: 'Paula Turner', job: 'Dentist', status: 'good', legend: 'foo', active: false },
+  { id: 17, name: 'Quincy Hall', job: 'Barista', status: 'bad', legend: 'bar', active: true },
+  { id: 18, name: 'Rachel White', job: 'Photographer', status: 'good', legend: 'baz', active: true },
+  { id: 19, name: 'Steven Baker', job: 'Teacher', status: 'bad', legend: 'foo', active: false },
+  { id: 20, name: 'Tina Moore', job: 'Lawyer', status: 'good', legend: 'bar', active: true },
+]
+```
+</Details>
+
+  With this data and configuration, the `Table` should render as follows:
+
+  <figure>
+    ![Basic table](./../../../assets/guides/table/basic-table.png)
+    <figcaption>Figure 4 - Basic table</figcaption>
+  </figure>
+
+  8. To add content to the `table-column-dynamic` column, a controller will be needed. Create a controller for the fragment using the [codegen](./codegen.mdx#utilizing-generated-code-for-controllers) feature.
+
+  9. In the editor, select the `Table` component and in the events tab, right click the `onDynamicContentRender` event and generate an event implementation. Change the content of the generated function to:
+
+<Details open summary={<summary>Render dynamic column content</summary>}>
+```tsx
+  @OnDynamicContentRender(TableGuideAliases.TABLE_GUIDE)
+  onTableGuideDynamicContentRender(event: RenderEvent): void {
+    const { data, entry, render, type } = event;
+    const person = data as unknown as Record<string, any>;
+    
+    if (type === 'column' && entry === 'dynamic') {
+      render(() => {
+        return (
+          <div className="c-table__custom-column-cell">
+            {person.status === 'good' ? '👍' : '👎'}
+          </div>
+        );
+      });
+    }
+  }
+```
+</Details>
+
+The table will now display emojis based on each person's status.
+
+<figure>
+  ![Table with dynamic content](./../../../assets/guides/table/table-with-dynamic-content.png)
+  <figcaption>Figure 5 - Table with dynamic content</figcaption>
+</figure>
+
+  10. The dynamic content render event can also be used to render customizable sub rows. To do so, the `withExpandedIndicator` property of the `Table` must be set to `true`, it must have a `keyField` configured and the content can not be grouped. If all conditions are met, change the content of the dynamic content render function to:
+
+<Details open summary={<summary>Render sub rows</summary>}>
+```tsx
+@OnDynamicContentRender(TableGuideAliases.TABLE_GUIDE)
+onTableGuideDynamicContentRender(event: RenderEvent): void {
+  const { data, entry, render, type } = event;
+  const person = data as unknown as Record<string, any>;
+
+  if (type === 'row') {
+    render(() => {
+      return (
+        <Panel>
+          <Text value={`I'm ${person.name} and I work as ${person.job}`} />
+        </Panel>
+      );
+    });
+  }
+
+  if (type === 'column' && entry === 'dynamic') {
+    render(() => {
+      return (
+        <div className="c-table__custom-column-cell">
+          {person.status === 'good' ? '👍' : '👎'}
+        </div>
+      );
+    });
+  }
+}
+```
+</Details>
+
+<figure>
+  ![Table with sub rows](./../../../assets/guides/table/table-with-sub-rows.png)
+  <figcaption>Figure 6 - Table with sub rows</figcaption>
+</figure>
+
+<Details open={false} summary={<summary>table-guide-controller.tsx</summary>}>
+```tsx
+import React from 'react';
+
+import { Panel, Text } from '@philips-internal/oswald-ui-components';
+import { Controller, OnDynamicContentRender } from '@philips-internal/oswald-ui-core/decorators';
+import type { RenderEvent } from '@philips-internal/oswald-ui-core/events';
+
+import { FragmentNames, TableGuideAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.TABLE_GUIDE })
+class TableGuideController {
+  @OnDynamicContentRender(TableGuideAliases.TABLE_GUIDE)
+  onTableGuideDynamicContentRender(event: RenderEvent): void {
+    const { data, entry, render, type } = event;
+    const person = data as unknown as Record<string, any>;
+
+    if (type === 'row') {
+      render(() => {
+        return (
+          <Panel>
+            <Text value={`I'm ${person.name} and I work as ${person.job}`} />
+          </Panel>
+        );
+      });
+    }
+
+    if (type === 'column' && entry === 'dynamic') {
+      render(() => {
+        return (
+          <div className="c-table__custom-column-cell">
+            {person.status === 'good' ? '👍' : '👎'}
+          </div>
+        );
+      });
+    }
+  }
+}
+
+export default TableGuideController;
+```
+</Details>
+
+<Details open={false} summary={<summary>table-guide.osw</summary>}>
+```json
+{
+  "metadata": {
+    "type": "ContextualBar",
+    "props": {
+      "alias": "contextual-bar-0",
+      "uuid": "65b68716-9ef4-4a33-a70a-4e236857d24a"
+    },
+    "children": [
+      {
+        "type": "Fetch",
+        "props": {
+          "alias": "fetch-0",
+          "uuid": "4837ae60-9016-4256-bb4d-af57531f93b3",
+          "endpoint": "/api/table-guide",
+          "slot": "content"
+        },
+        "children": [
+          {
+            "type": "Table",
+            "props": {
+              "alias": "table-guide",
+              "uuid": "6c487365-d892-408e-b6fe-2d7c4863b228",
+              "keyField": "id",
+              "grouping": [
+                "job"
+              ]
+            },
+            "children": [
+              {
+                "type": "TableColumn",
+                "props": {
+                  "alias": "table-column-name",
+                  "uuid": "54396891-703b-4118-89ff-223819edafe5",
+                  "alignment": "left",
+                  "value": "Name",
+                  "entry": "name",
+                  "width": "150px"
+                }
+              },
+              {
+                "type": "TableColumn",
+                "props": {
+                  "alias": "table-column-job",
+                  "uuid": "7e99254e-cc05-49b0-8f44-9002efb3735b",
+                  "alignment": "left",
+                  "value": "Job",
+                  "entry": "job",
+                  "width": "150px"
+                }
+              },
+              {
+                "type": "TableColumn",
+                "props": {
+                  "alias": "table-column-status",
+                  "uuid": "7ccabbdb-c273-447e-bb86-8d53326a253f",
+                  "type": "superscription",
+                  "value": "Status",
+                  "width": "70px",
+                  "superscription": [
+                    {
+                      "label": "Good",
+                      "value": "good",
+                      "color": "safety-green"
+                    },
+                    {
+                      "label": "Bad",
+                      "value": "bad",
+                      "color": "safety-red"
+                    }
+                  ],
+                  "entry": "status"
+                }
+              },
+              {
+                "type": "TableColumn",
+                "props": {
+                  "alias": "table-column-legend",
+                  "uuid": "d7ca1e4d-98f0-4ea0-9930-a26d7378b6bd",
+                  "type": "superscription_bar",
+                  "entry": "legend",
+                  "superscription": [
+                    {
+                      "color": "safety-blue",
+                      "label": "Foo",
+                      "value": "foo"
+                    },
+                    {
+                      "color": "safety-yellow",
+                      "label": "Bar",
+                      "value": "bar"
+                    },
+                    {
+                      "color": "safety-hazard",
+                      "label": "Baz",
+                      "value": "baz"
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "TableColumn",
+                "props": {
+                  "alias": "table-column-dynamic",
+                  "uuid": "3668ae51-eb30-49c5-9dcb-f53ca14af4f2",
+                  "type": "dynamic",
+                  "value": "Dynamic",
+                  "entry": "dynamic",
+                  "width": "120px"
+                }
+              },
+              {
+                "type": "TableColumn",
+                "props": {
+                  "alias": "table-column-active",
+                  "uuid": "35720acf-343f-450a-8c07-38dfc37e9079",
+                  "type": "checkbox",
+                  "value": "Active",
+                  "entry": "active",
+                  "width": "100px"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "table-guide"
+}
+```
+</Details>

@@ -1,0 +1,162 @@
+---
+sidebar_label: ConfigurationService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `ConfigurationService`
+
+The service goal is to centralize the configuration aspects of Oswald application.
+
+<Admonition type="note">
+When an application uses the `Foundation` component, most of its configuration its already set and controlled by it.
+</Admonition>
+
+## Methods
+
+### `getAuthenticationConfiguration`
+
+Returns all the authentication related settings of the application.
+
+#### Example
+
+<Details summary={<summary>Example: <code>getAuthenticationConfiguration</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+function bootstrap(): void {
+  const { routes } = ConfigurationService.getAuthenticationConfiguration() || {};
+
+  if (routes?.home) {
+    HistoryService.push(routes.home);
+  }
+}
+```
+</Details>
+
+### `getBaseURL`
+
+Return the current application base URL.
+
+#### Example
+
+<Details summary={<summary>Example: <code>getBaseURL</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+function bootstrap(): void {
+   HttpService.configure({
+    authentication: AuthenticationService,
+    base: ConfigurationService.getBaseURL(),
+   });
+  }
+```
+</Details>
+
+### `getEndpointMappers`
+
+Return all endpoint mappers.
+
+#### Example
+
+<Details summary={<summary>Example: <code>getEndpointMappers</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+function bootstrap(): void {
+  if (ConfigurationService.getEndpointMappers() && import.meta.hot) {
+    return;
+  }
+
+  ConfigurationService.setEndpointMappers({
+    information: informationMapper,
+  });
+}
+```
+</Details>
+
+### `initialize`
+
+Initializes the application configuration with information from the `.oswaldrc.json` file.
+
+#### Example
+
+<Details summary={<summary>Example: <code>initialize</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+function bootstrap(): void {
+  await ConfigurationService.initialize();
+}
+```
+</Details>
+
+### `setAuthenticationConfiguration`
+
+Set the configuration for everything authentication related needed by the application.
+
+#### Example
+
+<Details summary={<summary>Example: <code>setAuthenticationConfiguration</code></summary>}>
+```tsx
+function bootstrap(): void {
+  ConfigurationService.setAuthenticationConfiguration({
+    clientId: 'id',
+    endpoints: {
+      information: {
+        method: HttpMethod.GET,
+        url: '/information',
+      },
+      refresh: {
+        method: HttpMethod.POST,
+        url: '/refresh',
+      },
+      revoke: {
+        method: HttpMethod.POST,
+        url: '/revoke',
+      },
+    },
+    inactivity: {
+      time: 15 * 60 * 1000,
+    },
+    routes: {
+      forgotPassword: 'forgotPassword',
+      home: 'home',
+      inactivity: 'inactivity',
+      login: 'login',
+    },
+  });
+}
+```
+</Details>
+
+For Oswald v6+ version routes configuration could also be done using Oswald authentication manager feature:
+
+<figure>
+  ![Oswald authentication manager routes definition](./../../assets/editor/authentication-manager-routes.gif)
+  <figcaption>Figure 1 - Oswald authentication manager routes definition</figcaption>
+</figure>
+
+<Admonition type="note">
+If your application uses Oswald's authentication manager, it is not necessary to call this method.
+</Admonition>
+
+### `setEndpointMappers`
+
+Set the mapper function for each needed endpoint.
+
+#### Example
+
+<Details summary={<summary>Example: <code>setEndpointMappers</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+function bootstrap(): void {
+  if (ConfigurationService.getEndpointMappers() && import.meta.hot) {
+    return;
+  }
+
+  ConfigurationService.setEndpointMappers({
+    // @ts-ignore
+    information: informationMapper,
+  });
+}
+```
+</Details>
+

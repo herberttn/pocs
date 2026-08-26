@@ -1,0 +1,198 @@
+---
+title: Component Lifecycle
+sidebar_label: 4. Component Lifecycle
+sidebar_position: 4
+---
+
+import Admonition from '@theme/Admonition';
+
+Oswald components follow a lifecycle similar to React's component lifecycle, as the framework is built on top of React. Components go through distinct mount and unmount phases. Understanding the component lifecycle is essential for proper resource management, preventing memory leaks, and optimizing application performance.
+
+### When to Use Lifecycle Events
+
+Lifecycle events are useful for:
+
+* **Resource management**: Set up and tear down subscriptions, timers, or connections
+* **State persistence**: Save and restore component state across mount cycles
+* **Performance optimization**: Initialize expensive operations only when needed
+* **Integration**: Connect to third-party libraries that require setup/cleanup
+
+### Lifecycle Events
+
+Oswald provides two primary lifecycle decorators:
+
+* `@OnMount`: Triggered when a component is mounted to the DOM
+* `@OnUnmount`: Triggered when a component is about to be removed from the DOM
+
+Both decorators receive a `MountEvent` parameter.
+
+<Admonition title="Important Lifecycle Characteristics" type="warning">
+  **Multiple Mount/Unmount Cycles**: The same component instance may be mounted and unmounted multiple times depending on its parent's rendering flow and application navigation, causing the associated events to be called multiple times.
+
+  **Re-renders Do Not Trigger Lifecycle Events**: If a component re-renders due to a property or state change without being unmounted, lifecycle events will not be triggered. These events are only fired during actual mount/unmount operations.
+</Admonition>
+
+### Event Execution Order
+
+Lifecycle events fire in a **bottom-up order**: child components trigger their events before parent components. For example, the following component tree will result in the following execution order for both mount and unmount events:
+
+```
+Fetch
+  └─ Form
+      ├─ Field-A
+      │   └─ Input-A
+      ├─ Field-B
+      │   └─ Input-B
+      └─ Field-C
+          └─ Autocomplete-A
+              └─ Text-A
+```
+
+**Execution Order**:
+
+```
+Text-A → Autocomplete-A → Field-C → Input-B → Field-B → Input-A → Field-A → Form → Fetch
+```
+
+**Why Bottom-Up Order?**
+
+Using a bottom-up order means that:
+
+* Children are fully initialized before their parents
+* Parents can safely interact with children in their mount handlers
+* Cleanup occurs in the proper sequence to prevent memory leaks
+
+### Component Lifecycle Best Practices
+
+**In `@OnMount` Methods**:
+
+* Initialize component state
+* Set up subscriptions (e.g., event listeners, observables)
+* Restore saved component state
+
+**In `@OnUnmount` Methods**:
+
+* Clean up subscriptions and event listeners
+* Cancel pending operations (e.g., timers, fetch requests)
+* Save component state if needed
+* Release resources (e.g., close connections)
+
+### Common Pitfalls
+
+**Memory Leaks**: Failing to clean up subscriptions and operations in `@OnUnmount` can cause memory leaks and degraded application performance. Always pair setup operations in `@OnMount` with corresponding cleanup in `@OnUnmount`.
+
+**Performance**: Avoid performing heavy, synchronous operations in lifecycle methods, as they can block the UI thread and degrade user experience. Consider using async operations or deferring work when possible.
+
+### Example
+
+```tsx title="src/controllers/dashboard-controller.ts"
+import { Inject } from '@odinjs/odin';
+
+import type { FetchAPI, FilterAPI } from '@philips-internal/oswald-ui-components';
+import { Controller, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { MountEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, DashboardAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.DASHBOARD })
+class DashboardController {
+  @Inject(DashboardAliases.DATA_FETCH)
+  declare dataFetchAPI: FetchAPI;
+
+  private intervalId: number | null = null;
+
+  @OnMount(DashboardAliases.MAIN_LAYOUT)
+  onMainLayoutMount(): void {
+    // Set up periodic data refresh
+    this.intervalId = setInterval(() => {
+      this.dataFetchAPI.forceFetch();
+    }, 3 * 60 * 1000); // Force fetch every 3 minutes
+  }
+
+  @OnUnmount(DashboardAliases.MAIN_LAYOUT)
+  onMainLayoutUnmount(): void {
+    // Clean up interval to prevent memory leak
+    if (this.intervalId !== null) {
+      window.clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }
+
+  @OnMount(DashboardAliases.FILTER)
+  onFilterMount(event: MountEvent): void {
+    const filterAPI = event.target as FilterAPI;
+
+    // Restore previously saved filter state
+    filterAPI.restoreState();
+  }
+
+  @OnUnmount(DashboardAliases.FILTER)
+  onFilterUnmount(event: MountEvent): void {
+    const filterAPI = event.target as FilterAPI;
+
+    // Persist filter state for next mount
+    filterAPI.persistState();
+  }
+}
+
+export {
+  DashboardController,
+};
+```
+
+### Common Questions
+
+**Q: Can async/await be used in lifecycle methods?**
+A: Yes. Lifecycle methods can be async. However, the framework won't wait for them to complete before proceeding, so errors and cleanup must be handled properly:
+
+```tsx
+@OnMount(MyAliases.DATA_COMPONENT)
+async onDataComponentMount(): Promise<void> {
+  try {
+    await this.loadData();
+  } catch (error) {
+    console.error('Failed to load data:', error);
+  }
+}
+```
+
+**Q: What happens if a component unmounts while an async operation is pending?**
+A: The async operation will continue running unless you explicitly cancel it. Store references to pending operations and cancel them in `@OnUnmount`:
+
+```tsx
+private abortController: AbortController | null = null;
+
+@OnMount(MyAliases.DATA_COMPONENT)
+async onDataComponentMount(): Promise<void> {
+  this.abortController = new AbortController();
+  await fetch('/api/data', { signal: this.abortController.signal });
+}
+
+@OnUnmount(MyAliases.DATA_COMPONENT)
+onDataComponentUnmount(): void {
+  this.abortController?.abort();
+}
+```
+
+**Q: Can lifecycle events of multiple components be listened to in one controller?**
+A: Yes. Multiple `@OnMount` and `@OnUnmount` decorators can be used for different components:
+
+```tsx
+@OnMount(MyAliases.COMPONENT_A)
+onComponentAMount(): void { /* ... */ }
+
+@OnMount(MyAliases.COMPONENT_B)
+onComponentBMount(): void { /* ... */ }
+```
+
+**Q: Do lifecycle events fire when a component's properties change?**
+A: No. Lifecycle events only fire during actual mount and unmount operations. Property changes trigger re-renders but not lifecycle events.
+
+**Q: What is the execution order if a parent and child both have `@OnMount` handlers?**
+A: Child's `@OnMount` fires first, then parent's `@OnMount`. For `@OnUnmount`, the same bottom-up order applies: child first, then parent.
+
+**Q: Can a component be prevented from unmounting?**
+A: No. `@OnUnmount` is a notification that unmounting is happening, not a cancellable event. However, whether components mount/unmount can be controlled through conditional rendering in the fragment structure.
+
+## Related Resources
+* [Application Lifecycle](./application-lifecycle.mdx) - Learn about the application lifecycle

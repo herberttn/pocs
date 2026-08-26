@@ -1,0 +1,116 @@
+---
+title: Aliases
+sidebar_label: 2. Aliases
+sidebar_position: 2
+---
+
+An **alias** is a unique, developer-friendly identifier assigned to each component within a fragment. Aliases serve as the primary mechanism for referencing and interacting with specific components in your controller code.
+
+### Why Aliases Matter
+
+Aliases enable developers to:
+
+* **Reference components programmatically**: Access specific UI elements in controller logic
+* **Bind event handlers**: Connect user interactions to controller methods
+* **Inject component APIs**: Get type-safe access to component methods and properties
+* **Maintain readability**: Use meaningful names instead of system-generated identifiers
+
+### Auto-Generation
+
+When components are dragged into the canvas or created through the Tree Panel, Oswald automatically assigns an alias following the `{component-name}-{number}` pattern, for example: `button-0`, `button-1`, `input-0`, `text-0`.
+
+#### Best Practices
+
+While auto-generated aliases are functional, they are **not descriptive or maintainable**. Aliases should always be renamed to clearly describe the component's purpose or role within the fragment.
+
+**Renaming Process**:
+
+1. Select the component in the Tree Panel or Canvas
+2. Navigate to the Properties Panel
+3. Locate the `alias` field
+4. Update with a meaningful name that describes the component's purpose
+
+**Examples of Good Aliases**:
+
+* `primary-button` - Main action button
+* `username-field` - Input field for username entry
+* `password-field` - Input field for password entry
+* `submit-form-button` - Button that submits the form
+* `user-data-fetch` - Data fetch component for user information
+
+#### Naming Conventions
+
+While Oswald doesn't enforce specific naming conventions, following these guidelines improves code maintainability:
+
+* Use kebab-case (lowercase with hyphens): `my-button` not `myButton` or `MyButton`
+* Be descriptive but concise: `save-button` not `btn` or `the-button-that-saves-data`
+* Include the component type when helpful: `username-input`, `error-text`, `submit-button`
+
+#### Uniqueness Requirements
+
+Each alias must be **unique within its fragment**. However, different fragments can reuse the same alias names as they exist in separate namespaces.
+
+### Using Aliases in Code
+
+Aliases are used throughout controller code to reference components. With the auto-generated TypeScript enums, you get type-safe access to all aliases, preventing typos and enabling IDE autocompletion.
+
+**Common Use Cases**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Controller, Inject, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { InputAPI } from '@philips-internal/oswald-ui-components';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @Inject(MyFragmentAliases.USERNAME_INPUT)
+  declare usernameInput: InputAPI;
+
+  @OnClick(MyFragmentAliases.VALIDATE_USERNAME_BUTTON)
+  onValidateUsernameButtonClick(): void {
+    const username = this.usernameInput.getValue();
+
+    // Validation logic here
+  }
+}
+```
+
+#### Relationship to UUID
+
+While aliases are developer-facing identifiers, each component also has a **UUID** (Universally Unique Identifier). The UUID is used internally by the framework's rendering engine for:
+
+* Triggering events
+* Managing component lifecycle
+* Tracking component instances
+
+**Key Differences**:
+
+* **Alias**: Developer-defined, meaningful, used in controller code
+* **UUID**: Framework-generated, opaque, used internally by Oswald
+
+Developers should never need to work directly with component UUIDs in application code. Oswald handles all UUID-related operations automatically.
+
+### Common Questions
+
+**Q: Can an alias be changed after using it in controller code?**  
+A: Yes, but the TypeScript enums must be regenerated and all references in controller code must be updated. The IDE will show TypeScript errors where the old alias is still referenced.
+
+**Q: What happens if the same alias is used twice in one fragment?**  
+A: Oswald will prevent saving the fragment with duplicate aliases. Each alias must be unique within its fragment.
+
+**Q: Can different fragments use the same alias name?**  
+A: Yes. Aliases are scoped to their fragment, so `button-0` in FragmentA is completely separate from `button-0` in FragmentB.
+
+**Q: Is it necessary to use the generated enum, or can string literals be used?**  
+A: While string literals can be used, the generated enum provides type safety, autocompletion, and prevents typos. Always prefer the enum.
+
+**Q: How can all places where an alias is used be found?**  
+A: Use the IDE's "Find References" feature on the enum value (e.g., `MyFragmentAliases.USERNAME_INPUT`) to see all usages across the codebase.
+
+**Q: What's the difference between alias and component name?**  
+A: Component name (e.g., `Button`, `Input`) identifies the component type. Alias (e.g., `submit-button`, `username-input`) identifies a specific instance of that component within a fragment.
+
+## Related Resources
+* [Fragments](./fragments.mdx) - Learn about fragments
+* [Controllers](./controllers.mdx) - Learn about fragment controllers

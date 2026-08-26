@@ -1,0 +1,385 @@
+---
+title: DataContext
+sidebar_label: DataContext
+---
+
+The `DataContext` provides a hierarchical data storage system that allows fragments to access data from the current level and all parent levels. It supports reactive updates through a listener pattern, making it ideal for managing shared state across nested fragments.
+
+`DataContext` organizes data as a tree structure where each context can have a parent context, child contexts can access their own data and all parent data, and changes to parent contexts automatically notify child contexts.
+
+### Injection
+
+Inject the `DataContext` into your controllers using the `@Inject` decorator:
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnClick(MyFragmentAliases.BUTTON)
+  onButtonClick(): void {
+    const userId = this.data.get('userId');
+    console.log('User ID:', userId);
+  }
+}
+```
+
+### Methods
+
+#### `get`
+
+Retrieves the value of a data entry. If the key doesn't exist in the current context, it searches up the parent chain.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnMount(MyFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    const userName = this.data.get('userName');
+    const userId = this.data.get('userId');
+
+    console.log(`User: ${userName} (ID: ${userId})`);
+  }
+}
+```
+
+#### `set`
+
+Updates the context with new data. Existing entries with the same keys will be overwritten, while entries with different keys are maintained. All listeners will be notified of the change.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnClick(MyFragmentAliases.SAVE_BUTTON)
+  onSave(): void {
+    this.data.set({
+      userName: 'John Doe',
+      lastModified: new Date().toISOString(),
+      isDirty: false
+    });
+  }
+}
+```
+
+#### `keys`
+
+Returns an array of all available keys in the current context and all parent contexts.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnMount(MyFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    const availableKeys = this.data.keys();
+    console.log('Available data keys:', availableKeys);
+    // Output: ['userId', 'userName', 'role', 'preferences']
+  }
+}
+```
+
+#### `getBulkData`
+
+Generates a flat object containing all entries from the current context and all parent contexts. Child context values override parent values for duplicate keys.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnClick(MyFragmentAliases.EXPORT_BUTTON)
+  onExport(): void {
+    const allData = this.data.getBulkData();
+    console.log('Complete data snapshot:', allData);
+    // Output: { userId: 1, userName: 'John', role: 'admin', preferences: {...} }
+  }
+}
+```
+
+#### `addListener`
+
+Registers a listener function that will be called whenever data changes in the current context or any parent context. Returns a function to remove the listener.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  declare unsubscribe: () => void;
+
+  @OnMount(MyFragmentAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.unsubscribe = this.data.addListener((data) => {
+      console.log('Data updated:', data);
+      this.updateUI(data);
+    });
+  }
+
+  @OnUnmount(MyFragmentAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.unsubscribe();
+  }
+
+  private updateUI(data: Record<string, unknown>): void {
+    // Update your UI based on the new data
+  }
+}
+```
+
+#### `fireListeners`
+
+Manually triggers all registered listeners with the current data. This is usually called automatically by `set()`.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnClick(MyFragmentAliases.REFRESH_BUTTON)
+  onRefresh(): void {
+    this.data.fireListeners();
+  }
+}
+```
+
+#### `destroy`
+
+Cleans up all listeners and stops listening to parent context changes. Should be called when the context is no longer needed.
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnUnmount(MyFragmentAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.data.destroy();
+  }
+}
+```
+
+### Usage Examples
+
+#### Hierarchical Data Access
+
+The `DataContext` automatically inherits data from parent contexts:
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { ApplicationAliases, FragmentNames, UserSettingsAliases } from '../codegen/index.js';
+
+// Parent fragment sets top-level data
+@Controller({ fragment: FragmentNames.APPLICATION })
+class ApplicationController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnMount(ApplicationAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.data.set({
+      appVersion: '1.0.0',
+      theme: 'dark',
+      language: 'en'
+    });
+  }
+}
+
+// Child fragment can access parent data and add its own
+@Controller({ fragment: FragmentNames.USER_SETTINGS })
+class UserSettingsController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  @OnMount(UserSettingsAliases.LAYOUT)
+  onLayoutMount(): void {
+    // Access parent data
+    const appVersion = this.data.get('appVersion'); // '1.0.0'
+    const theme = this.data.get('theme'); // 'dark'
+
+    // Add child-specific data
+    this.data.set({
+      userId: 123,
+      userName: 'John Doe'
+    });
+
+    // Get all data (parent + child)
+    const allData = this.data.getBulkData();
+    // { appVersion: '1.0.0', theme: 'dark', language: 'en', userId: 123, userName: 'John Doe' }
+  }
+}
+```
+
+#### Reacting to Data Changes
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount, OnUnmount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, StatusIndicatorAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.STATUS_INDICATOR })
+class StatusIndicatorController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  declare unsubscribe: () => void;
+
+  @OnMount(StatusIndicatorAliases.LAYOUT)
+  onLayoutMount(): void {
+    this.unsubscribe = this.data.addListener((data) => {
+      this.updateStatus(data);
+    });
+
+    // Initialize with current data
+    const currentData = this.data.getBulkData();
+    this.updateStatus(currentData);
+  }
+
+  @OnUnmount(StatusIndicatorAliases.LAYOUT)
+  onLayoutUnmount(): void {
+    this.unsubscribe();
+  }
+
+  private updateStatus(data: Record<string, unknown>): void {
+    const isOnline = data.isOnline as boolean;
+    const lastSeen = data.lastSeen as string;
+
+    console.log(`Status: ${isOnline ? 'Online' : 'Offline'}, Last seen: ${lastSeen}`);
+  }
+}
+```
+
+#### Type-Safe Data Access
+
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, UserProfileAliases } from '../codegen/index.js';
+
+interface UserData {
+  userId: number;
+  userName: string;
+  email: string;
+}
+
+@Controller({ fragment: FragmentNames.USER_PROFILE })
+class UserProfileController {
+
+  @Inject(ContextType.DATA)
+  declare data: DataContext;
+
+  private getUserData(): UserData {
+    return {
+      userId: this.data.get('userId') as number,
+      userName: this.data.get('userName') as string,
+      email: this.data.get('email') as string
+    };
+  }
+
+  @OnMount(UserProfileAliases.LAYOUT)
+  onLayoutMount(): void {
+    const userData = this.getUserData();
+    console.log(`Loading profile for ${userData.userName}`);
+  }
+}
+```

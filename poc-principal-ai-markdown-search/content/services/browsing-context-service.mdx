@@ -1,0 +1,136 @@
+---
+sidebar_label: BrowsingContextService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `BrowsingContextService`
+
+The service provides developers with methods that facilitate the interaction with various browsing contexts. It enables the application to function across multiple screens and allows communication between them without relying on an external server.
+
+To see the service in action, refer to the samples implementations of a [parent context](https://github.com/philips-internal/oswald/blob/af481e1c566e26dc27e04272ee235567b60175bf/samples/application/src/controllers/services/browsing-context/browsing-context-parent-controller.ts) interacting with a [child context](https://github.com/philips-internal/oswald/blob/e48b873bc98eb1c22a902a29edca0ceb0ef4b474/samples/application/src/controllers/services/browsing-context/browsing-context-child-controller.ts).
+
+## Methods
+
+### `getCurrentContextId`
+
+Returns the current context id, if executing from within one.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+  @OnClick(Alias.ALIAS)
+  onButtonClick(): void {
+    const currentContext = BrowsingContextService.getCurrentContextId();
+
+    console.log('context', currentContext);
+  }
+}
+```
+</Details>
+
+### `listenMessage`
+
+Starts listening to a specific message type in the given browsing context.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+interface Message {
+  name: string;
+  email: string;
+}
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+  declare unlistenMessage: BrowsingContextMessageUnlisten;
+
+  @OnMount(Alias.ALIAS)
+  onLayoutMount(): void {
+    this.unlistenMessage = BrowsingContextService.listenMessage('context-id', 'message-type', (message: Message) => {
+      console.log('message-contents', message);
+    });
+  }
+
+  @OnUnmount(Alias.ALIAS)
+  onLayoutUnmount(): void {
+    if (isFunction(this.unlistenMessage)) {
+      this.unlistenMessage();
+    }
+  }
+}
+```
+</Details>
+
+### `open`
+
+Opens a new browsing context with the provided options.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+  @OnClick(Alias.ALIAS)
+  onButtonClick(): void {
+    const context = BrowsingContextService.open({
+      contextId: 'context-id',
+      moduleId: 'module-id',
+      onClose: () => {
+        console.log('context-closed');
+      },
+      onReady: () => {
+        console.log('context-ready');
+      },
+    });
+
+    context.sendMessage({
+      data: { name: 'John', email: 'johndoe@email.com' },
+      type: 'message-type',
+    });
+  }
+}
+```
+</Details>
+
+### `requestClose`
+
+Request the closing of a browsing context.
+
+<Details>
+```tsx
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+  @OnClick(Alias.ALIAS)
+  onButtonClick(): void {
+    const options: BrowsingContextRequestCloseOptions = {
+        askForConfirmation: true,
+        dialogDescription: 'Confirm close?',
+      };
+
+    const closed = await BrowsingContextService.requestClose('context-id', options);
+
+    console.log('Context was closed?', closed);
+  }
+}
+```
+</Details>
+
+### `sendMessage`
+
+Sends a message to a browsing context.
+
+<Details>
+```tsx
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+  @OnClick(Alias.ALIAS)
+  onButtonClick(): void {
+    BrowsingContextService.sendMessage('context-id', {
+      data: { name: 'John', email: 'johndoe@email.com' },
+      type: 'message-type',
+    });
+  }
+}
+```
+</Details>

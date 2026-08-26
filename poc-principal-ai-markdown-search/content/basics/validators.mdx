@@ -1,0 +1,406 @@
+---
+title: Validators
+sidebar_label: Validators
+---
+
+import Admonition from '@theme/Admonition';
+
+Validators are utilities that check whether data meets specific requirements or constraints. Unlike formatters, which transform data between representations, validators focus solely on verifying that data is correct, complete, and follows business rules.
+
+When building applications, user input and data must meet certain criteria before processing or storing it. For example:
+
+* **Required fields**: Ensuring users provide necessary information
+* **Length constraints**: Checking that text meets minimum or maximum length requirements
+* **Value ranges**: Verifying that numbers fall within acceptable bounds
+* **Data completeness**: Ensuring all required information is provided before proceeding
+* **Format validation**: Checking that data follows expected patterns
+* **Business rules**: Implementing domain-specific validation unique to your application
+
+Without validators, several problems would arise:
+
+* **Inconsistent validation**: Different parts of your app might validate the same data differently
+* **Error-prone code**: Manual validation logic scattered throughout your codebase
+* **Poor user experience**: Unclear or inconsistent error messages
+* **Security risks**: Missing validation can allow invalid or malicious data into your system
+* **Code duplication**: The same validation logic repeated in multiple places
+
+Validators solve these problems by providing reusable, testable validation logic that can be applied consistently across your application.
+
+### How Validators Work
+
+Validators are asynchronous functions that examine a value and return validation results. Each result indicates whether the value is valid and provides an error message if it's not.
+
+**Basic Validator Usage**:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const result = await ModelService.validate('john@example.com')
+  .apply('required')
+  .run();
+
+// Result: [{ valid: true, name: 'required', message: '' }]
+```
+
+**Validation with Failure**:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const result = await ModelService.validate('')
+  .apply('required')
+  .run();
+
+// Result: [{ valid: false, name: 'required', message: 'This field is required' }]
+```
+
+### The ValidationRunner
+
+The `ValidationRunner` is a powerful feature that allows you to chain multiple validators together. This is essential for implementing comprehensive validation rules:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const password = 'short';
+
+const results = await ModelService.validate(password)
+  .apply('required')
+  .apply('min-length', { length: 8 })
+  .apply('max-length', { length: 128 })
+  .run();
+
+// Results contains validation results from all three validators
+// If any validator fails, you'll know exactly which constraint was violated
+```
+
+The ValidationRunner executes validators sequentially and collects all results. This gives you a complete picture of all validation issues, not just the first one encountered.
+
+### Built-in Validators
+
+Oswald provides comprehensive validators in the `@philips-internal/oswald-ui-model` package:
+
+#### Presence Validators
+
+* **`required`**: Validates that a value is defined and not empty
+
+#### Length Validators
+
+* **`min-length`**: Validates minimum string length
+* **`max-length`**: Validates maximum string length
+* **`length-between`**: Validates string length falls within a range
+* **`min-digits`**: Validates minimum number of digits in a string
+* **`max-digits`**: Validates maximum number of digits in a string
+* **`min-alphas`**: Validates minimum number of alphabetic characters
+* **`max-alphas`**: Validates maximum number of alphabetic characters
+
+#### Value Validators
+
+* **`min-value`**: Validates minimum numeric value
+* **`max-value`**: Validates maximum numeric value
+* **`interval-threshold`**: Validates numeric value falls within an interval
+
+#### Content Validators
+
+* **`not-contains`**: Validates that value doesn't contain specific strings
+* **`phone-number`**: Validates phone number format
+* **`unique`**: Validates uniqueness in arrays
+
+#### Structural Validators
+
+* **`required-entries`**: Validates required object entries are present
+* **`required-files`**: Validates required file uploads are provided
+
+### Using Validators in Your Application
+
+#### Basic Validation in Controllers
+
+```tsx
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  async onSubmit(): void {
+    const username = this.usernameInput.getValue();
+
+    const results = await ModelService.validate(username)
+      .apply('required')
+      .apply('min-length', { length: 3 })
+      .apply('max-length', { length: 20 })
+      .run();
+
+    const isValid = results.every(result => result.valid);
+
+    if (!isValid) {
+      const errorMessages = results
+        .filter(result => !result.valid)
+        .map(result => result.message);
+
+      this.showErrors(errorMessages);
+      return;
+    }
+
+    await this.saveUser({ username });
+  }
+}
+```
+
+#### Complex Validation Chains
+
+Multiple validators can be combined with options to implement sophisticated validation rules:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+async function validatePassword(password: string): Promise<boolean> {
+  const results = await ModelService.validate(password)
+    .apply('required')
+    .apply('min-length', { length: 8 })
+    .apply('max-length', { length: 128 })
+    .apply('min-digits', { quantity: 1 })
+    .apply('min-alphas', { quantity: 1 })
+    .apply('not-contains', { values: ['password', '123456', 'qwerty'] })
+    .run();
+
+  return results.every(result => result.valid);
+}
+```
+
+### Validator Options
+
+Most validators accept configuration options to customize their behavior:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+// Min length with custom value
+await ModelService.validate(username)
+  .apply('min-length', { length: 5 })
+  .run();
+
+// Value range
+await ModelService.validate(age)
+  .apply('min-value', { value: 0 })
+  .apply('max-value', { value: 150 })
+  .run();
+
+// Not contains with multiple forbidden values
+await ModelService.validate(password)
+  .apply('not-contains', { values: ['password', '123456'] })
+  .run();
+```
+
+### Validation Result Structure
+
+Every validation returns a `Validation` object with the following properties:
+
+```typescript
+interface Validation {
+  name: string;           // Validator identifier
+  valid: boolean;         // Whether validation passed
+  message: string;        // Error/warning message (empty string if valid)
+  type?: ValidatorType;   // 'default' or 'warning' (optional, defaults to 'default')
+}
+```
+
+#### Validation Types
+
+Validators can return different types to indicate the severity of validation issues:
+
+- **`ValidatorType.DEFAULT`**: Standard validation errors that prevent form submission (blocks user action)
+- **`ValidatorType.WARNING`**: Non-blocking warnings that inform users but allow form submission (does not block user action)
+
+**Example with Warnings**:
+
+```tsx
+import { ValidatorType } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const passwordStrengthValidator = async (password: string) => {
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChars = /[!@#$%^&*]/.test(password);
+
+  const strength = [
+    hasUpperCase,
+    hasLowerCase,
+    hasNumbers,
+    hasSpecialChars
+  ].filter(Boolean).length;
+
+  if (strength < 2) {
+    return [{
+      valid: false,
+      name: 'password-strength',
+      message: 'Password is too weak',
+      type: ValidatorType.DEFAULT,
+    }];
+  }
+
+  return [{
+    valid: true,
+    name: 'password-strength',
+    message: 'Password could be stronger',
+    type: ValidatorType.WARNING,
+  }];
+};
+```
+
+### Validation Timeout
+
+<Admonition type="caution">
+If a validation takes more than **500ms** to complete, it will be timed out and return a validation error. Keep your validation logic fast and efficient.
+</Admonition>
+
+**Best Practices for Performance**:
+
+* Avoid expensive operations like API calls in validators
+* Consider async validation only when absolutely necessary
+* Cache validation results when possible
+
+### Creating Custom Validators
+
+When built-in validators don't meet the application's needs, create custom validators for:
+
+* **Business-specific rules**: Validation logic unique to your domain
+* **Complex constraints**: Multi-field validation or conditional rules
+* **External validation**: Checking against databases or APIs (with caution about timeouts)
+* **Custom messages**: Providing specific, context-aware error messages
+
+<Admonition type="tip">
+Learn how to create custom validators in the [Creating a Validator](/guides/creating-validator) guide.
+</Admonition>
+
+### Best Practices
+
+**Provide clear error messages**: Users should understand exactly what's wrong and how to fix it.
+
+```tsx
+// ❌ Bad: Generic message
+{ valid: false, message: 'Invalid input' }
+
+// ✅ Good: Specific message
+{ valid: false, message: 'Username must be at least 3 characters long' }
+```
+
+**Chain validators logically**: Order validators from most to least restrictive. Check `required` first, then format, then business rules.
+
+```tsx
+// ✅ Good: Logical order
+await ModelService.validate(email)
+  .apply('required')
+  .apply('email-format')
+  .apply('unique-email')
+  .run();
+```
+
+**Handle validation results comprehensively**: Check all validation results, not just the first failure.
+
+```tsx
+// ✅ Good: Show all errors
+const results = await ModelService.validate(password)
+  .apply('required')
+  .apply('min-length', { length: 8 })
+  .apply('min-digits', { quantity: 1 })
+  .run();
+
+const errors = results.filter(r => !r.valid);
+errors.forEach(error => {
+  this.showError(error.message);
+});
+```
+
+### Validators vs Formatters
+
+Understanding when to use validators versus formatters:
+
+| Feature | Validators | Formatters |
+|---------|-----------|------------|
+| **Purpose** | Verify data meets constraints | Transform data between representations |
+| **Transform data** | No | Yes (format ↔ parse) |
+| **Validate data** | Yes | Yes (as part of formatting) |
+| **Use cases** | Required fields, length checks, value ranges | Phone numbers, dates, postal codes, currency |
+| **Can be chained** | Yes, via ValidationRunner | No (one formatter at a time) |
+
+**When to use validators**:
+* Checking if fields are filled out (required)
+* Verifying length constraints (min/max length)
+* Validating value ranges (min/max value)
+* Business rule validation (unique values, custom logic)
+
+**When to use formatters**:
+* Displaying data in human-readable format
+* Parsing user input for storage
+* Applying consistent formatting across your app
+* Validating data format (formatters include validation)
+
+**Use both together**:
+
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const validationResults = await ModelService.validate(phoneNumber)
+  .apply('required')
+  .apply('min-length', { length: 10 })
+  .run();
+
+if (validationResults.every(r => r.valid)) {
+  const formatted = ModelService.format('phone-number', phoneNumber);
+  this.displayPhone.setValue(formatted);
+}
+```
+
+### Common Use Cases
+
+**Real-time Validation**:
+
+```tsx
+@OnChange(MyFragmentAliases.PASSWORD_INPUT)
+async onPasswordChange(event: ChangeEvent): Promise<void> {
+  const password = event.detail.value;
+
+  const results = await ModelService.validate(password)
+    .apply('min-length', { length: 8 })
+    .apply('min-digits', { quantity: 1 })
+    .apply('min-alphas', { quantity: 1 })
+    .run();
+
+  this.updatePasswordStrengthIndicator(results);
+}
+```
+
+**Conditional Validation**:
+
+```tsx
+async validateAddress(): Promise<Validation[]> {
+  const country = this.countrySelect.getValue();
+  const postalCode = this.postalCodeInput.getValue();
+
+  if (country === 'BR') {
+    return ModelService.validate(postalCode)
+      .apply('required')
+      .apply('cep')
+      .run();
+  }
+
+  if (country === 'US') {
+    return ModelService.validate(postalCode)
+      .apply('required')
+      .apply('min-length', { length: 5 })
+      .apply('max-length', { length: 10 })
+      .run();
+  }
+
+  return [{ valid: true, name: 'postal-code', message: '' }];
+}
+```
+
+### Related Resources
+
+* [Creating Custom Validators](/guides/creating-validator) - Step-by-step guide to creating your own validators
+* [ModelService](/services/model-service) - Complete API reference for the ModelService
+* [Formatters](./formatters.mdx) - Learn about data formatting and transformation

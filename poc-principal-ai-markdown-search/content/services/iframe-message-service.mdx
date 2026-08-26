@@ -1,0 +1,86 @@
+---
+sidebar_label: IFrameMessageService
+---
+
+import Details from '@theme/Details';
+
+# `IFrameMessageService`
+
+The service's goal is to facilitate the interaction and development with iframes, providing methods to publish/subscribe window post messages between an iframe and its parent.
+
+## Constants
+
+### `IFRAME_MESSAGE_SERVICE_MESSAGE_ID`
+
+Used to identify window post messages sent by the `IFrameMessageService`.
+
+### `IFRAME_SERVICE_RESET_IDLE_MESSAGE_ID`
+
+Used to send reset [`Auto Logoff`](../foundation/auto-logoff.mdx) countdown message.
+
+## Methods
+
+### `publishToIFrame`
+
+Publish a message to an iframe.
+
+#### Example
+
+<Details summary={<summary>Example: Publish to iframe</summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+     IFrameMessageService.publishToIFrame('ID', 'custom-iframe', {
+        value: 2,
+     });
+  }
+}
+```
+</Details>
+
+### `publishToParent`
+
+Publish a message to the iframe's parent window.
+
+#### Example
+
+<Details summary={<summary>Example: Publish to iframe's parent</summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+     IFrameMessageService.publishToParent('ID_2', {
+        value: 2,
+     });
+  }
+}
+```
+</Details>
+
+### `subscribe`
+
+Subscribe to messages of a given id.
+
+#### Example
+
+<Details summary={<summary>Example: Subscribe to a message</summary>}>
+```tsx
+function MyComponent(props: MyComponentProps): ReactComponent {
+  useEffect(() => {
+    const unsubscribe = IFrameMessageService.subscribe('ID_3', () => doSomethingAwesome());
+
+    return (): void => {
+      unsubscribe();
+    };
+  }, []);
+
+  ...
+}
+```
+</Details>
+

@@ -1,0 +1,186 @@
+---
+title: Fragments
+sidebar_label: 1. Fragments
+sidebar_position: 1
+---
+
+import Admonition from '@theme/Admonition';
+
+Fragments are a foundational UI concept in Oswald that enables developers to break down user interfaces into smaller, more manageable, and reusable pieces. These pieces can be composed together to create larger and more complex UI structures, ultimately forming an entire application.
+
+### Purpose and Benefits
+
+Fragments are designed to serve as **composition elements**, where multiple components and other fragments are combined into a cohesive and reusable UI structure. This approach provides several key benefits:
+
+* **Modularity**: Break down complex UIs into smaller, focused pieces
+* **Reusability**: Use the same fragment across different parts of an application or even across different applications
+* **Maintainability**: Easier to understand and modify isolated UI pieces
+* **Code organization**: Promote a clear separation of concerns in application architecture
+
+### Creating Fragments
+
+Fragments are created and modified through the Oswald Editor using the following tools:
+
+* **Tree Panel**: Navigate and manage the fragment component structure
+* **Canvas**: Drag-and-drop components to visually build your fragments
+* **Properties Panel**: Configure component properties
+
+**Naming Requirements**: When you save a new fragment, you must provide a **unique name** that is not used by any other fragment in your application. This name will be used to reference the fragment throughout your codebase.
+
+### Fragment Structure
+
+Fragments are saved to disk as JSON files, becoming part of your application's source code. This allows them to be version-controlled alongside the rest of your project. This design decision provides several important advantages:
+
+**File System Integration**: Fragments exist as regular files in the project directory structure, stored in the `resources/metadata` folder. This means it is possible to:
+
+* Browse and locate fragments using the operating system's file explorer
+* Search fragment content using standard text search tools
+* Edit fragments manually in a text editor if needed (though Oswald's Editor is recommended)
+* [Organize fragments](./../editor/metadata/metadata-management.mdx) into subdirectories based on feature or module
+
+**Version Control Compatibility**: Because fragments are plain text JSON files, they integrate seamlessly with version control systems like Git. This provides:
+
+* **Change tracking**: Every modification to a fragment creates a clear diff showing exactly what changed (components added, properties modified, etc.)
+* **History**: View the complete evolution of a fragment over time, seeing who made changes and when
+* **Branching**: Create feature branches to develop new UI features without affecting the main codebase
+* **Merging**: Merge fragment changes from different branches, with conflict resolution when multiple developers modify the same fragment
+* **Rollback**: Easily revert to a previous version of a fragment if a change introduces issues
+
+
+<Admonition type="warning" title="Important Considerations">
+  * **Manual Editing Risks**: While fragment JSON files can be edited directly, doing so bypasses Oswald's validation and can introduce errors. Always use the Oswald Editor when possible.
+  * **File Location**: All fragments must be stored in the `resources/metadata` folder to be recognized by the framework.
+  * **Name Uniqueness**: Fragment names must be unique across the entire application to avoid conflicts.
+
+  By treating fragments as first-class source code files, Oswald ensures that UI definitions benefit from the same professional development workflows, tools, and practices as the rest of application code.
+</Admonition>
+
+
+### JSON Representation
+
+Every fragment is represented as a JSON structure. When you interact with components through the editor, you are modifying this underlying structure.
+
+**Example Fragment Structure**:
+
+```json title="resources/metadata/button.json"
+{
+  "name": "button",
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-0",
+      "uuid": "e9f115e1-6a3b-4532-934e-d617636167eb",
+      "rows": "auto",
+      "columns": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "Button",
+        "props": {
+          "alias": "primary-button",
+          "uuid": "e0d8865c-24cc-48de-8a45-46b4391ca4fc",
+          "value": "button.primary",
+          "slot": "content",
+          "size": "lg"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Structure Breakdown**:
+
+* `name`: The unique identifier for the fragment across your application
+* `metadata`: Contains the complete component structure
+  * `type`: The component name (e.g., `Layout`, `Button`, `Form`)
+  * `props`: Properties configured through the editor
+    * `alias`: A developer-friendly identifier for the component
+    * `uuid`: An internal identifier used by the framework's rendering engine
+  * `children`: An array of nested components
+
+### Code Generation
+
+When you save fragments through the Oswald Editor, it automatically generates TypeScript enums to provide type-safe references to your fragments and their component aliases:
+
+* `FragmentNames`: An enum containing all fragment names in your application
+* `${FragmentName}Aliases`: Individual enum for each fragment containing all component aliases within that fragment
+
+#### Configuration
+
+The location of these generated files is configured through the `.oswaldrc.json` file. The default location is the `src/codegen` folder.
+
+#### Usage Example
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @Inject(MyFragmentAliases.PRIMARY_BUTTON)
+  declare primaryButtonAPI: ButtonAPI;
+}
+```
+
+### Loading and Runtime Behavior
+
+Fragments are **static files** that serve as the basis for rendering your application. They are:
+
+* **Loaded asynchronously**: Fragments are fetched on demand
+* **Cached in memory**: Once loaded, fragments remain in memory for optimal performance
+* **Immutable at runtime**: The fragment structure itself cannot be modified during application execution
+
+### Working with Controllers
+
+Once fragments are loaded, developers can interact with them using **Controller classes**. Controllers must be annotated with the `@Controller` decorator and linked to a specific fragment.
+
+Controllers should always be imported at the application root level. See the [Application Lifecycle](./application-lifecycle.mdx) section for more details on proper controller registration.
+
+**Example Controller Declaration**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Controller } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+
+import { FragmentNames } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  // Controller logic here
+}
+
+export default MyFragmentController;
+```
+
+#### Fragments and Controllers
+
+Fragments and Controllers work together to create a modular and maintainable UI architecture:
+
+* **Fragments**: Encapsulate the UI structure and visual elements
+* **Controllers**: Manage behavior, event handling, and data flow for those elements
+
+This separation of concerns allows developers to:
+
+* Design UI structures independently from business logic
+* Reuse fragments across different application contexts
+* Test UI and logic separately
+* Modify fragment structure without changing controller code (within reason)
+
+### Common Questions
+
+**Q: Where are fragment files stored?**  
+A: Fragments are stored as JSON files in the `resources/metadata` folder of your project.
+
+**Q: What happens if two fragments have the same name?**  
+A: The application will fail to load. Fragment names must be unique across your entire application.
+
+**Q: Can fragments be nested within other fragments?**  
+A: Yes, fragments can contain other fragments as child components, using the `FragmentReference` component, enabling deep composition.
+
+**Q: Do fragments support dynamic content?**  
+A: Fragments define the static structure. Dynamic content and behavior are handled by controllers and data binding at runtime.
+
+## Related Resources
+* [Aliases](./aliases.mdx) - Learn about fragment aliases
+* [Controllers](./controllers.mdx) - Learn about fragment controllers
+* [Fragment Communication](./fragment-communication.mdx) - Learn about how fragments communicate with each other

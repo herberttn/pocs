@@ -1,0 +1,75 @@
+---
+sidebar_label: HTMLViewer
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `HTMLViewer`
+
+The HTMLViewer component provides a secure way to display HTML content in your application. It renders HTML content in an isolated iframe environment, ensuring security while maintaining proper accessibility.
+
+<Admonition type="important">
+  This component is designed for **display purposes only**. The HTML content is not editable by users - it's a read-only viewer that safely renders pre-existing HTML content.
+</Admonition>
+
+## Purpose
+
+The HTMLViewer component is ideal for scenarios where you need to:
+- Display formatted HTML content from external sources
+- Show rich text content (documents, reports, etc.)
+- Present HTML-based content without allowing user modification
+- Safely render HTML content with built-in XSS protection
+
+## Security Features
+
+The component automatically sanitizes HTML content using DOMPurify to prevent XSS attacks:
+- Removes potentially dangerous scripts and iframes
+- Strips event handlers and dangerous protocols
+- Provides content isolation through iframe sandboxing
+- Maintains security while preserving safe HTML formatting
+
+## Properties
+
+| Property | Type | Default | Description |
+| -------- | ---- | ------- | ----------- |
+| `htmlContent` | `string` | `''` | The HTML content to display securely |
+| `title` | `string` | `''` | The title expression for the iframe (for accessibility) |
+| `className` | `string` | `''` | Custom CSS class name for the component |
+
+## Usage
+
+### Basic Usage
+
+```tsx
+import { HTMLViewer } from '@philips-internal/oswald-ui-components';
+
+function MyComponent() {
+  return (
+    <HTMLViewer 
+      htmlContent="<h1>Welcome</h1><p>This is some HTML content.</p>" 
+    />
+  );
+}
+```
+
+### With Custom Title and Styling
+
+```tsx
+<HTMLViewer 
+  htmlContent="<h2>Report Content</h2><p>Detailed information...</p>"
+  title="tws.report.viewer.title"
+  className="my-custom-viewer"
+/>
+```
+
+## Limitations
+
+<Admonition type="note">
+  The HTMLViewer is designed for content display only. Users cannot:
+  - Edit the HTML content
+  - Interact with form elements
+  - Modify the rendered content
+  - Execute scripts (automatically removed for security)
+</Admonition>
+

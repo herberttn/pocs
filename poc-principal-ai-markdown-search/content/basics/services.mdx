@@ -1,0 +1,292 @@
+---
+title: Services
+sidebar_label: Services
+---
+
+Services in Oswald are singleton utilities that provide centralized, reusable functionality across an application. They act as shared resources that controllers, components, and other parts of an application can access to perform common operations without duplicating code.
+
+## What Are Services?
+
+**Services** are specialized modules that encapsulate specific functionality or manage specific concerns within an application. They follow the singleton pattern, meaning there's only one instance of each service shared across the entire application.
+
+### Core Characteristics
+
+* **Singleton Pattern**: A single instance shared throughout the application lifecycle
+* **Stateless or Stateful**: Services can maintain state (like configuration) or be purely functional
+* **Global Access**: Available anywhere in an application without instantiation
+* **Specialized Purpose**: Each service handles a specific domain of functionality
+
+### Why Use Services?
+
+Services solve several common development challenges:
+
+* **Code Reusability**: Write once, use everywhere - no need to duplicate common logic
+* **Separation of Concerns**: Keep business logic separate from UI components
+* **Centralized State**: Manage shared state in a predictable, centralized location
+* **Consistency**: Ensure operations like HTTP requests or formatting happen the same way across the app
+* **Maintainability**: Changes to shared functionality happen in one place
+
+## Oswald Services
+
+Built-in services provided by the Oswald framework that handle core functionality. Some commonly used services include:
+
+* **[`AuthenticationService`](./../services/authentication-service.mdx)**: User authentication and session management
+* **[`BrokerService`](./../services/broker-service.mdx)**: Publish-subscribe messaging for fragment communication
+* **[`FileService`](./../services/file-service/file-service.mdx)**: File upload and download operations
+* **`HttpService`**: HTTP requests and API communication
+* **[`MessageService`](./../services/message-service.mdx)**: Internationalization (i18n) and translation management
+
+For a complete list of available framework services, see the [Services reference documentation](/category/services).
+
+#### Service Initialization
+
+Some services require initialization or configuration before they can be used:
+
+* **Auto-initialized Services**: Services like `BrokerService`, `ModelService`, and `ModalService` are ready to use immediately without any setup
+* **Foundation-initialized Services**: Services like `MessageService` and `LanguageService` are automatically initialized when using the `Foundation` component
+* **Manual Configuration**: Services like `FileService` may require configuration (e.g., setting URLs, handlers) before use
+
+Check each service's documentation for specific initialization requirements.
+
+## Using Services
+
+Services are imported from Oswald packages and used directly. Most services are available from the core package, while some UI-specific services come from the components package:
+
+```tsx title="src/controllers/my-controller.ts"
+// Core services
+import { BrokerService, HttpService, ModelService, MessageService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+// Component services
+import { ModalService } from '@philips-internal/oswald-ui-components';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyController {
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  async onSubmit(): void {
+    // Use ModelService for validation
+    const results = await ModelService.validate(email)
+      .apply('required')
+      .apply('email-format')
+      .run();
+
+    if (results.every(r => r.valid)) {
+      // Use MessageService for translations
+      const successMessage = MessageService.translate('form.success');
+
+      // Use BrokerService to notify other fragments
+      BrokerService.publishToTopic('form-submitted', { email });
+    }
+  }
+}
+```
+
+## Creating Application Services
+
+Application services encapsulate business logic and API interactions specific to an application. They follow a factory pattern that returns a singleton instance.
+
+### Service Structure
+
+Every application service follows this three-part structure:
+
+1. **Interface**: TypeScript interface defining the service's public API (method signatures and return types)
+2. **Factory Function**: A function (e.g., `createUserService`) that creates and returns the service implementation
+3. **Singleton Export**: A single exported constant that holds the service instance (e.g., `const UserService = createUserService()`)
+
+### Example: User Service
+
+Here's an example of an application service that manages user data:
+
+```tsx title="src/services/user-service.ts"
+import { HttpService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+interface UserServiceInterface {
+  getUser(id: string): Promise<User | null>;
+  updateUser(id: string, data: Partial<User>): Promise<User | null>;
+}
+
+function createUserService(): UserServiceInterface {
+  const getUser = async (id: string): Promise<User | null> => {
+    const response = await HttpService.get<User>(`/api/users/:id`, { id });
+    return response.body ?? null;
+  };
+
+  const updateUser = async (id: string, data: Partial<User>): Promise<User | null> => {
+    const response = await HttpService.put<User>(`/api/users/:id`, { id }, { body: data });
+    return response.body ?? null;
+  };
+
+  return { getUser, updateUser };
+}
+
+const UserService = createUserService();
+
+export { UserService };
+```
+
+### Using Application Services
+
+Import and use application services in controllers:
+
+```tsx title="src/controllers/user-profile-controller.ts"
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { UserService } from '../services/user-service.js';
+
+@Controller({ fragment: FragmentNames.USER_PROFILE })
+class UserProfileController {
+  @OnMount(UserProfileFragmentAliases.LAYOUT)
+  async onLayoutMount(): Promise<void> {
+    const user = await UserService.getUser('123');
+    // Use user data in the controller
+  }
+}
+```
+
+## Service Best Practices
+
+### Design Principles
+
+**Keep Services Focused**: Each service should have a single, well-defined responsibility.
+
+```tsx
+// ❌ Bad: Service does too many unrelated things
+interface BadService {
+  getUsers(): Promise<User[]>;
+  sendEmail(to: string): Promise<void>;
+  validateForm(data: FormData): boolean;
+}
+
+// ✅ Good: Focused services
+interface UserService {
+  getUsers(): Promise<User[]>;
+  getUser(id: string): Promise<User>;
+}
+```
+
+**Use TypeScript Interfaces**: Always define interfaces for services to ensure type safety and clear contracts.
+
+```tsx
+interface UserServiceInterface {
+  getUser(id: string): Promise<User>;
+  updateUser(id: string, data: Partial<User>): Promise<User>;
+}
+```
+
+**Handle Errors Gracefully**: Services should catch and handle errors appropriately.
+
+```tsx
+const getUser = async (id: string): Promise<User | null> => {
+  try {
+    const response = await HttpService.get<User>(`/api/users/:id`, { id });
+    return response.body ?? null;
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    return null;
+  }
+};
+```
+
+**Document Public APIs**: Add JSDoc comments to document service methods.
+
+```tsx
+interface UserServiceInterface {
+  /**
+   * Retrieves a user by their ID.
+   *
+   * @param id - The user's unique identifier
+   *
+   * @returns Promise resolving to user or null if not found
+   */
+  getUser(id: string): Promise<User | null>;
+}
+```
+
+### When to Create a Service
+
+**Create a service when:**
+
+* **Shared functionality**: Logic is needed by multiple controllers or components
+* **External API integration**: Backend communication requires consistent error handling
+* **Complex business logic**: Operations are too complex to inline in controllers
+* **State management**: Shared state needs to be accessed by multiple parts of the app
+* **Third-party library wrappers**: An abstraction layer for external dependencies is needed
+
+**Don't create a service when:**
+
+* Logic is only used in one place (keep it in the controller)
+* The operation is simple and doesn't need abstraction
+* The code is just being moved around without adding value
+
+## Common Patterns
+
+### Service Composition
+
+Services can use other services:
+
+```tsx
+function createOrderService(): OrderServiceInterface {
+  const createOrder = async (orderData: OrderData): Promise<Order> => {
+    const response = await HttpService.post<Order>('/api/orders', {}, { body: orderData });
+
+    BrokerService.publishToTopic('order-created', response.body);
+
+    return response.body;
+  };
+
+  return {
+    createOrder,
+  };
+}
+```
+
+### Service with State
+
+Some services maintain internal state:
+
+```tsx
+function createCacheService(): CacheServiceInterface {
+  const cache = new Map<string, unknown>();
+
+  const get = <T>(key: string): T | undefined => {
+    return cache.get(key) as T;
+  };
+
+  const set = <T>(key: string, value: T): void => {
+    cache.set(key, value);
+  };
+
+  const clear = (): void => {
+    cache.clear();
+  };
+
+  return {
+    get,
+    set,
+    clear,
+  };
+}
+
+const CacheService = createCacheService();
+```
+
+## Common Questions
+
+**Q: What's the difference between Oswald services and application services?**  
+A: Oswald services are built-in framework utilities (like `HttpService`, `BrokerService`). Application services are custom services created for specific business logic and API interactions.
+
+**Q: Can I create multiple instances of a service?**  
+A: Services follow the singleton pattern - one instance is exported that's shared across the entire application. If multiple instances are needed, consider a different pattern (factory or class).
+
+**Q: Should I use services or put logic in controllers?**  
+A: Use services when logic is shared across multiple controllers, interacts with external APIs, or contains complex business logic. Keep simple, single-use logic in controllers.
+
+**Q: Do services need to be initialized?**  
+A: It depends on the service. Check the Service Initialization section - some are auto-initialized, some are initialized by Foundation, and some require manual configuration.
+
+**Q: Can services use other services?**  
+A: Yes! Services can import and use other services. This is called service composition. See the Common Patterns section for an example.
+
+## Related Resources
+
+* [Services Reference](/category/services) - Complete list of available Oswald services
+* [Controllers](./controllers.mdx) - Learn about fragment controllers
+* [Fragment Communication](./fragment-communication.mdx) - How fragments communicate

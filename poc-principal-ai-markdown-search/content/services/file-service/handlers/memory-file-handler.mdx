@@ -1,0 +1,191 @@
+---
+sidebar_label: MemoryFileHandler
+---
+
+import Details from '@theme/Details';
+
+# `MemoryFileHandler`
+
+The handler goal is to interacts with files in-memory to perform operations. This handler is an option to [`FileService`](../file-service.mdx).
+
+### Configuration
+
+| Property              | Type       | Default                          | Description                                                       |
+|-----------------------|------------|----------------------------------|-------------------------------------------------------------------|
+| `errorResponseState`  | HttpStatus | HttpStatus.INTERNAL_SERVER_ERROR | The error response status that should be returned                 |
+| `previewUrl`          | string     | ''                               | The backend preview file endpoint URL                             |
+| `removeResponseState` | HttpStatus | HttpStatus.OK                    | The remove file operation response status that should be returned |
+| `removeUrl`           | string     | ''                               | The backend remove file endpoint URL                              |
+| `uploadResponseState` | HttpStatus | HttpStatus.CREATED               | The upload file operation response status that should be returned |
+| `uploadUrl`           | string     | ''                               | The backend upload endpoint URL                                   |
+
+#### Example
+
+<Details summary={<summary>Example: <code>Set file configuration</code></summary>}>
+```tsx
+function setupFileService(): void {
+  const fileHandlerProvider = (): FileHandler => {
+    const configuration = new FileHandlerConfiguration();
+     
+    const fileHandler = new MemoryFileHandler();
+    fileHandler.setConfiguration(configuration);
+    
+    return fileHandler;
+  }
+
+  FileService.registerFileHandlerProvider({ provider: fileHandlerProvider, name: 'memory' });
+}
+```
+</Details>
+
+## Methods
+
+> **Note**
+> `MemoryFileHandler` implements the `FileHandler` interface adding their own methods as needed.
+
+### `clearMemoryFiles`
+
+Clears the files saved on memory.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Clear memory files</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    this.memoryFileHandler.clearMemoryFiles();
+  }
+}
+```
+</Details>
+
+### `download`
+ 
+Donwloads a file.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Download file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    this.memoryFileHandler.download('/download', 'file1');
+  }
+}
+```
+</Details>
+
+### `getMemoryFiles`
+
+Returns all files saved on memory in a Map identified by path.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get memory files</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    this.memoryFileHandler.getMemoryFiles();
+  }
+}
+```
+</Details>
+
+### `getPreviewURL`
+
+Retuns the file preview URL using the base `previewURL` set on configuration and also the file path.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get preview URL</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    void this.memoryFileHandler.getPreviewURL('/resources/files/file01')
+      .then((url: string) => {
+        this.avatar.setImage(url);
+      });
+  }
+}
+```
+</Details>
+
+### `preview`
+
+Opens the file preview.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Preview file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    this.memoryFileHandler..preview('/resources/files/file01');
+  }
+}
+```
+</Details>
+
+### `remove`
+
+Removes an uploaded file.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Remove file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    this.memoryFileHandler.remove('/resources/files/file01', 'file1', onRemoveCallback());
+  }
+}
+```
+</Details>
+
+### `upload`
+
+Uploads a file.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Upload file</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.FRAGMENT })
+class MyController {
+  memoryFileHandler: MemoryFileHandler = FileService.getFileHandlerInstance('memory');
+
+  @OnClick(FragmentAliases.BUTTON)
+  onButtonClick(): void {
+    const file = new File(['(⌐□_□)'], 'image.png', { type: 'image/png' });
+    const events = { onProgress: onProgressCallback() };
+    const maxFileSize = { maxSize: 2, sizeUnit: BytesSizeUnit.MEGABYTES };
+    
+    void this.memoryFileHandler.upload(file, events, maxFileSize);
+  }
+}
+```
+</Details>

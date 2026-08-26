@@ -1,0 +1,438 @@
+---
+sidebar_label: AuthenticationService
+---
+
+import Details from '@theme/Details';
+
+# `AuthenticationService`
+
+The service offers a comprehensive set of methods to assist developers in meeting their authentication requirements without the need to build their own solution from scratch.
+
+With some extra configuration, the service also provides support for encrypted [Json Web Tokens](https://jwt.io). To enable this in your application see [Encrypted tokens](#encrypted-tokens).
+
+## Encrypted tokens
+
+To enable this feature, the application needs to be [configured](./configuration-service.mdx#setauthenticationconfiguration) with the `encryptedTokens` property set to `true` and ensure the presence of a valid HTTP method and URL for `endpoints.decryptToken`
+
+When making a request to the configured endpoint, the encrypted token is included as a `accessToken` parameter. The service expects a JSON response in the following format, where the `token` property contains the encoded JWT.
+
+<Details summary={<summary>Example configuration for encrypted tokens support</summary>}>
+```tsx
+function bootstrap(): void {
+  ConfigurationService.setAuthenticationConfiguration({
+    encryptedToken: true,
+    endpoints: {
+      decryptToken: {
+        method: HttpMethod.POST,
+        url: '/api/tokens/decrypt-token',
+      },
+      ...
+    },
+    ...
+  });
+}
+```
+</Details>
+
+<Details summary={<summary>Expected decryption response</summary>}>
+```tsx
+interface DecryptTokenResponse {
+  token: string;
+}
+```
+</Details>
+
+## Multi-factor Authentication (MFA)
+
+To enable this feature, the application needs to be [configured](./configuration-service.mdx#setauthenticationconfiguration) with valid `multiFactor` endpoints.
+Check the interface [AuthenticationConfigurationMultiFactorAuthenticationEndpoints](https://github.com/philips-internal/oswald/blob/main/packages/core/src/services/authentication-service/authentication-service-types.ts) for a description of the endpoints.
+
+<Details summary={<summary>Example configuration for multi-factor authentication support</summary>}>
+```tsx
+function bootstrap(): void {
+  ConfigurationService.setAuthenticationConfiguration({
+    encryptedToken: true,
+    endpoints: {
+      multiFactor: {
+        activate: {
+          method: HttpMethod.POST,
+          url: "/api/mfa/activate"
+        },
+        validate: {
+          method: HttpMethod.POST,
+          url: "/api/mfa/validate"
+        },
+        deactivate: {
+          method: HttpMethod.POST,
+          url: "/api/mfa/deactivate"
+        },
+        resend: {
+          method: HttpMethod.POST,
+          url: "/api/mfa/resend"
+        },
+        validateActivation: {
+          method: HttpMethod.POST,
+          url: "/api/mfa/validate-activation"
+        }
+      },
+      ...
+    },
+    ...
+  });
+}
+```
+</Details>
+
+Or through Oswald's [Authentication Manager](../editor/managers/authentication-manager.mdx):
+
+<figure>
+  ![Oswald authentication manager MFA endpoints](./../../assets/editor/authentication-manager-mfa.png)
+  <figcaption>Figure 1 - Oswald authentication manager MFA endpoints</figcaption>
+</figure>
+
+### MFA Flow
+
+#### Example: user with MFA enabled using the Login component
+
+1. User tries to log in the application;
+2. Server returns a pre auth token with either: 
+   - The property `token_type` with value `PRE_AUTH`;
+   - `pre_auth` included in the `roles` property of the token information;
+3. Server sends the code to the user;
+4. User is requested to enter the code as shown in figure 2;
+5. User enters the code and the `multiFactor.validate` endpoint is called to validate the MFA code;
+6. User is logged in.
+
+<figure>
+  ![MFA code requested](./../../assets/components/login/login-mfa-code.png)
+  <figcaption>Figure 2 - MFA code requested</figcaption>
+</figure>
+
+## Methods
+
+### `activateMultiFactorAuthentication`
+
+Activates multi-factor authentication for the user. This method sends a request to the endpoint declared in the `multiFactor.validateActivation` configuration.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Activate MFA</code></summary>}>
+```tsx
+await AuthenticationService.activateMultiFactorAuthentication({ code: '123456' });
+```
+</Details>
+
+### `deactivateMultiFactorAuthentication`
+
+Deactivates multi-factor authentication for the user. This method sends a request to the endpoint declared in the `multiFactor.deactivate` configuration.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Deactivate MFA</code></summary>}>
+```tsx
+await AuthenticationService.deactivateMultiFactorAuthentication({ code: '123456' });
+```
+</Details>
+
+### `getErrorMessageFromResponse`
+
+Returns the error message from a given response.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get the error message</code></summary>}>
+```tsx
+await AuthenticationService.validateMultiFactorAuthentication({ ... })
+  .catch((error) => {
+    const errorMessage = AuthenticationService.getErrorMessageFromResponse(error);
+  });
+```
+</Details>
+
+### `getHeaders`
+
+Returns the headers for the authentication service.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get authentication service hearders</code></summary>}>
+```tsx
+const headers = AuthenticationService.getHeaders();
+```
+</Details>
+
+### `getJWTToken`
+
+Returns the JWT token for the authenticated user, or null if not authenticated.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get the authenticated user JWT token</code></summary>}>
+```tsx
+const jwtToken = AuthenticationService.getJWTToken();
+```
+</Details>
+
+### `getRefreshToken`
+
+Returns the refresh token for the authenticated user.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get the refresh token for the authenticated user</code></summary>}>
+```tsx
+const token = AuthenticationService.getRefreshToken();
+```
+</Details>
+
+### `hasLogoutListeners`
+
+Returns a boolean indicating whether there are any logout listeners.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Check if there are logout listeners</code></summary>}>
+```tsx
+const hasLogoutListeners = AuthenticationService.hasLogoutListeners();
+```
+</Details>
+
+### `isAuthenticated`
+
+Returns a boolean indicating whether the user is authenticated.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Check if the user is authenticated</code></summary>}>
+```tsx
+const isAuthenticated = AuthenticationService.isAuthenticated();
+```
+</Details>
+
+### `listenLogout`
+
+Adds a listener for the logout event.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Adding a listener for the logout event</code></summary>}>
+```tsx
+const unlistenLogout = AuthenticationService.listenLogout(() => { ... });
+```
+</Details>
+
+### `login`
+
+Logs the user in with the given login parameters.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Log the user in</code></summary>}>
+```tsx
+const jwtToken = await AuthenticationService.login({ password, username });
+```
+</Details>
+
+### `loginWithAuthorizationCode`
+
+Logs the user in with the given authorization code.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Log the user in</code></summary>}>
+```tsx
+const jwtToken = await AuthenticationService.loginWithAuthorizationCode(code);
+```
+</Details>
+
+### `loginWithResponse`
+
+Logs the user in with the given OAuth response.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Log the user in</code></summary>}>
+```tsx
+const jwtToken = await AuthenticationService.loginWithResponse(oAuthResponse);
+```
+</Details>
+
+### `logout`
+
+Logs the user out.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Log the user out</code></summary>}>
+```tsx
+const response = await AuthenticationService.logout();
+```
+</Details>
+
+### `matchClaims`
+
+Matches the given claims based on a logical operator.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Match the given claims</code></summary>}>
+```tsx
+const result = AuthenticationService.matchClaims({ name: 'John', surname: 'Doe' }, Logical.AND);
+```
+</Details>
+
+### `matchPermissions`
+
+Matches the given permissions based on a logical operator.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Match the given permissions</code></summary>}>
+```tsx
+const result = AuthenticationService.matchPermissions(['foo:bar'], Logical.AND);
+```
+</Details>
+
+### `redirectToForgotPassword`
+
+Redirects the user to the forgot password page.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Redirect the user to the forgot password page</code></summary>}>
+```tsx
+AuthenticationService.redirectToForgotPassword();
+```
+</Details>
+
+### `redirectToHome`
+
+Redirects the user to the home page.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Redirect the user to the home page</code></summary>}>
+```tsx
+AuthenticationService.redirectToHome();
+```
+</Details>
+
+### `redirectToInactivity`
+
+Redirects the user to the inactivity page.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Redirect the user to the inactivity page</code></summary>}>
+```tsx
+AuthenticationService.redirectToInactivity();
+```
+</Details>
+
+### `redirectToLogin`
+
+Redirects the user to the login page.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Redirect the user to the login page</code></summary>}>
+```tsx
+AuthenticationService.redirectToLogin();
+```
+</Details>
+
+### `redirectToOIDCLogout`
+
+Redirects the user to the external logout.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Redirect the user to the external logout</code></summary>}>
+```tsx
+AuthenticationService.redirectToOIDCLogout(fallbackRoute);
+```
+</Details>
+
+### `requestMultiFactorAuthenticationActivation`
+
+Requests activation of multi-factor authentication for the user. This method sends a request to the endpoint declared in the `multiFactor.activate` configuration.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Request MFA activation</code></summary>}>
+```tsx
+await AuthenticationService.requestMultiFactorAuthenticationActivation();
+```
+</Details>
+
+### `requestNewMultiFactorAuthenticationCode`
+
+Requests a new code for multi-factor authentication. This method sends a request to the endpoint declared in the `multiFactor.resend` configuration.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Request a new MFA code</code></summary>}>
+```tsx
+await AuthenticationService.requestNewMultiFactorAuthenticationCode();
+```
+</Details>
+
+### `requestRefreshToken`
+
+Requests a new refresh token with the given parameters.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Request a new refresh token</code></summary>}>
+```tsx
+await AuthenticationService.requestRefreshToken({ ... });
+```
+</Details>
+
+### `restoreTokenFromStorage`
+
+Tries to restore the JWT stored in the browser session storage.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Restore the JWT stored in the browser session storage</code></summary>}>
+```tsx
+await AuthenticationService.restoreTokenFromStorage();
+```
+</Details>
+
+### `updateJWTToken`
+
+Updates the JSON Web Token with the given response.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Update the JWT with the given response</code></summary>}>
+```tsx
+const jwtToken = await AuthenticationService.updateJWTToken(oAuthResponse);
+```
+</Details>
+
+### `validateCredentials`
+
+Validates the given login credentials.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Validate the given login credentials</code></summary>}>
+```tsx
+const { response, token } = await AuthenticationService.validateCredentials({ password, username });
+```
+</Details>
+
+### `validateMultiFactorAuthentication`
+
+Validates multi-factor authentication for the user. This method sends a request to the endpoint declared in the `multiFactor.validate` configuration.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Validate a new MFA code</code></summary>}>
+```tsx
+await AuthenticationService.validateMultiFactorAuthentication({ code: '123456' });
+```
+</Details>

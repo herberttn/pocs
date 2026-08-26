@@ -1,0 +1,334 @@
+---
+title: Routing
+sidebar_label: Routing
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+Routing in Oswald enables developers to create navigable applications by mapping URL paths to fragments. The routing system seamlessly integrates with fragments, allowing developers to create complex navigation structures through declarative configuration.
+
+When a user navigates to a URL, Oswald matches the path against configured routes and automatically renders the associated fragment. This enables standard web behaviors like browser back/forward buttons, bookmarkable URLs, and deep linking into specific application states.
+
+### How Routing Works
+
+Routes connect URL paths to fragments through declarative configuration. Each route defines:
+
+* **Route Name**: A unique identifier for the route
+* **Path Pattern**: The URL path that triggers this route (e.g., `/users`, `/orders/:id`)
+* **Fragment**: The fragment to render when the path matches
+
+Routes are managed through Oswald's Route Manager, a visual interface that allows configuration without writing code. When saved, routes become part of the application's configuration and are automatically available throughout the application lifecycle.
+
+### Route Configuration
+
+#### Route Paths
+
+Route paths define the URL patterns that trigger fragment rendering. Paths follow standard URL conventions and support both static and dynamic segments:
+
+* **Static paths**: `/users`, `/dashboard`, `/settings`
+* **Dynamic parameters**: `/users/:id`, `/orders/:orderId/items/:itemId`
+* **Mixed patterns**: `/app/users/:id/settings`
+
+#### Route Hierarchy
+
+Routes support parent-child relationships, enabling nested URL structures. Child routes inherit their parent's path, creating longer, hierarchical paths without duplication.
+
+**Route Hierarchy Example**:
+
+```
+/app                   (Parent route)
+  └─ /users            (Child route: /app/users)
+      └─ /:id          (Child route: /app/users/:id)
+          └─ /settings (Child route: /app/users/:id/settings)
+```
+
+#### Using the Code-Generated Routes Enum
+
+All routes configured through Oswald's Route Manager are automatically available in a code-generated `Routes` enum. This enum contains the full path for each route, providing type safety and preventing typos.
+
+**The `Routes` enum should be preferred over string literals** for route paths. This ensures that route changes in the Route Manager are automatically reflected in code, and TypeScript will catch any references to routes that no longer exist.
+
+```tsx title="src/controllers/dashboard-controller.ts"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import { Routes, FragmentNames, DashboardFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.DASHBOARD })
+class DashboardController {
+  @OnClick(DashboardFragmentAliases.USERS_BUTTON)
+  onUsersButtonClick(): void {
+    // Recommended: Use the Routes enum
+    HistoryService.push(Routes.USERS_LIST);
+
+    // Avoid: String literals are error-prone
+    // HistoryService.push('/users');
+  }
+
+  @OnClick(DashboardFragmentAliases.USER_DETAILS_BUTTON)
+  onUserDetailsButtonClick(): void {
+    // Routes enum also works with parameters
+    HistoryService.push(Routes.USER_DETAILS, { id: '123' });
+  }
+}
+```
+
+### Rendering Routes
+
+#### FoundationRoutes Component
+
+The `FoundationRoutes` component renders all configured routes. It must be placed in the application's root fragment to enable routing functionality. This component acts as the entry point for the routing system, matching the current URL against configured routes and rendering the appropriate fragments.
+
+#### Nested Routes with RouteOutlet
+
+When creating nested routes, parent routes often need to remain visible while child routes render within them. The `RouteOutlet` component provides a placeholder where child route fragments appear, enabling layout composition where parent content surrounds child route content.
+
+**Without `RouteOutlet`**: Navigating to a child route replaces the parent route's content entirely.
+
+**With `RouteOutlet`**: The parent content remains visible, and the child fragment renders inside the outlet, enabling layouts with persistent navigation, headers, or sidebars.
+
+### Route Parameters
+
+Routes support dynamic parameters that capture variable path segments. Parameters are prefixed with a colon (`:paramName`) and can be accessed in controllers through the `HistoryService`.
+
+**Parameter Syntax Examples**:
+
+* Single parameter: `/users/:id`
+* Multiple parameters: `/orders/:orderId/items/:itemId`
+* Mixed static and dynamic: `/app/users/:id/settings`
+
+**Naming Requirements**: Parameter names must start with a letter (A-Z or a-z) and can contain only letters, numbers, and underscores.
+
+### Programmatic Navigation
+
+Oswald provides two primary mechanisms for programmatic navigation: the `HistoryService` for standard route manipulation and `ApplicationContext` for navigation with mobile-responsive application stack management.
+
+#### Using HistoryService
+
+The `HistoryService` provides methods for navigating between routes programmatically.
+
+**Important**: The `push()` method only maintains the base path configured for the application. Navigating from `/application/users` to `/:id/details` will result in `/123/details` (or `/base-path/123/details` if a base path is configured). Route paths are not relative to the current location.
+
+```tsx title="src/controllers/users-list-controller.ts"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, UsersListFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.USERS_LIST })
+class UsersListFragmentController {
+  @OnClick(UsersListFragmentAliases.USER_ITEM)
+  onUserItemClick(event: ClickEvent): void {
+    const userId = '123'; // In real scenario, get from data context or component
+
+    // Current route: /application/users
+    // Navigates to: /application/users/123/details
+    // Adds to history - user can navigate back
+    HistoryService.push('/:id/details', { id: userId });
+  }
+}
+
+export {
+  UsersListFragmentController,
+};
+```
+
+```tsx title="src/controllers/order-form-controller.ts"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, OrderFormFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.ORDER_FORM })
+class OrderFormFragmentController {
+  @OnClick(OrderFormFragmentAliases.CANCEL_BUTTON)
+  onCancelButtonClick(event: ClickEvent): void {
+    // Current route: /application/orders/create
+    // Navigates to: /service-orders
+    // Full page redirect
+    HistoryService.redirect('/service-orders');
+  }
+}
+
+export {
+  OrderFormFragmentController,
+};
+```
+
+**Navigate Back in History**:
+
+```tsx title=\"src/controllers/user-details-controller.ts\"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, UserDetailsFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.USER_DETAILS })
+class UserDetailsFragmentController {
+  @OnClick(UserDetailsFragmentAliases.BACK_BUTTON)
+  onBackButtonClick(event: ClickEvent): void {
+    // Navigate to previous route in history
+    HistoryService.back();
+  }
+}
+
+export {
+  UserDetailsFragmentController,
+};
+```
+
+#### Using ApplicationContext
+
+The `ApplicationContext` provides enhanced navigation that manages both browser history and the application's navigation stack. This is particularly useful for mobile-responsive applications that display back buttons in the application bar.
+
+```tsx title="src/controllers/dashboard-controller.ts"
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { applicationContext } from '@philips-internal/oswald-ui-foundation';
+
+import { FragmentNames, DashboardFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.DASHBOARD })
+class DashboardFragmentController {
+  @OnClick(DashboardFragmentAliases.ORDERS_BUTTON)
+  onOrdersButtonClick(event: ClickEvent): void {
+    // Redirects and updates navigation stack for mobile UI
+    // Current route: /application/dashboard
+    // Navigates to: /application/orders/123/details
+    applicationContext.redirect('/:id/details', { id: 123 });
+  }
+}
+
+export {
+  DashboardFragmentController,
+};
+```
+
+**When to Use Each Method**:
+
+* **`HistoryService`**: Standard navigation scenarios where only browser history management is needed
+* **`ApplicationContext`**: Mobile-responsive applications that require navigation stack tracking for UI elements like back buttons
+
+#### Navigation Methods Comparison
+
+| Method | Use Case | History Behavior |
+| ------ | -------- | ---------------- |
+| `HistoryService.push()` | Normal navigation where users should be able to go back | Adds new entry |
+| `HistoryService.push()` with `replace: true` | After form submissions or when back navigation shouldn't be allowed | Replaces current entry |
+| `HistoryService.redirect()` | Full page redirect (works for both internal and external URLs, allows going back) | Full page redirect |
+| `HistoryService.back()` | Explicit back button functionality | Goes to previous entry |
+| `ApplicationContext.redirect()` | Mobile-responsive apps with navigation stack tracking | Replaces current entry + updates app stack |
+
+### Accessing Route Information
+
+The `HistoryService` provides methods to access information about the current route, including the path, route parameters, and query string parameters.
+
+```tsx title="src/controllers/order-details-controller.ts"
+import { Controller, OnMount } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { MountEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+import { HistoryService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { FragmentNames, OrderDetailsFragmentAliases } from '../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.ORDER_DETAILS })
+class OrderDetailsFragmentController {
+  @OnMount(OrderDetailsFragmentAliases.LAYOUT)
+  onLayoutMount(event: MountEvent): void {
+    // Current URL: /application/orders/456/items/789?status=active&page=2
+
+    const route = HistoryService.getCurrentRoute();
+    console.log('Route:', route); // /application/orders/456/items/789
+
+    const params = HistoryService.getCurrentRouteParams();
+    console.log('Parameters:', params); // { orderId: '456', itemId: '789' }
+
+    const queryParams = HistoryService.getCurrentRouteQueryParams();
+    console.log('Query Parameters:', queryParams); // { status: 'active', page: '2' }
+
+    this.loadOrderDetails(params.orderId, params.itemId, queryParams.status);
+  }
+
+  private loadOrderDetails(orderId: string, itemId: string, status?: string): void {
+    // Load order and item data
+  }
+}
+
+export {
+  OrderDetailsFragmentController,
+};
+```
+
+**Important**: Route and query parameters are always returned as strings. Convert them to the appropriate type (numbers, booleans) as needed in application code.
+
+### Best Practices
+
+#### Route Design
+
+* **Use semantic paths**: Choose clear, descriptive paths that reflect the content or functionality being accessed
+* **Keep hierarchy manageable**: Avoid deeply nested routes unless the hierarchy genuinely reflects the application structure
+* **Group related functionality**: Use parent routes to organize related features under common path prefixes
+
+#### Navigation Patterns
+
+* **Use the code-generated `Routes` enum**: Always prefer the `Routes` enum over string literals for type safety and maintainability
+* **Choose the appropriate navigation method**:
+  * Use `HistoryService.push()` for standard SPA navigation
+  * Use `HistoryService.push()` with `replace: true` option to prevent users from navigating back
+  * Use `HistoryService.redirect()` for full page redirects (works for both internal and external URLs)
+  * Use `HistoryService.back()` for explicit back button functionality in custom UI
+  * Use `applicationContext.redirect()` for mobile-responsive applications with navigation stack tracking
+* **Validate route parameters**: Always validate and check route parameters before using them in operations
+* **Handle missing parameters gracefully**: Provide fallback behavior when required parameters are missing
+
+#### Parameter Handling
+
+* **Convert parameter types**: Route parameters are always strings. Convert them to the appropriate type before use
+* **Sanitize and validate**: Always validate and sanitize parameters before using them in API calls or database operations
+
+#### Common Pitfalls
+
+* **Memory Leaks from Navigation in Lifecycle**: Avoid calling navigation methods in `@OnMount` without conditions, as this immediately navigates away and can cause unexpected behavior
+* **Security Vulnerabilities**: Always sanitize route parameters before using them in operations to prevent injection attacks
+
+### Common Questions
+
+**Q: How do routes differ from regular fragment rendering?**  
+A: Routes automatically render fragments based on URL paths, enabling browser navigation features (back/forward buttons, bookmarkable URLs). Regular fragments are rendered through explicit inclusion in parent fragments and don't create navigable URLs.
+
+**Q: Can the same fragment be used in multiple routes?**  
+A: Yes. A single fragment can be associated with multiple different routes, allowing the same UI structure to be rendered at different paths. This promotes reusability and reduces duplication.
+
+**Q: What happens if no route matches the current URL?**  
+A: If no configured route matches the URL, no fragment will be rendered in the `FoundationRoutes` component area. Consider creating a catch-all route for handling 404/not found scenarios.
+
+**Q: How are route parameters different from query parameters?**  
+A: Route parameters are part of the URL path pattern (e.g., `/users/:id`) and are defined in the Route Manager. Query parameters are appended to the URL (e.g., `?status=active&page=2`) and are not part of the route definition. Both can be accessed through `HistoryService`.
+
+**Q: When should `HistoryService.push()` be used vs `HistoryService.redirect()`?**  
+A: Use `push()` for standard single-page application navigation. Use `redirect()` for full page redirects, which work for both internal and external URLs. Note that `redirect()` still allows users to go back using the browser's back button. To prevent users from navigating back, use `push()` or `redirect()` with the `replace: true` option.
+
+**Q: What is the difference between `HistoryService` and `ApplicationContext` navigation?**  
+A: `HistoryService` handles browser history and standard navigation. `ApplicationContext` adds mobile-responsive navigation stack tracking for UI features like back buttons in application bars. Use `ApplicationContext` when building mobile-responsive applications.
+
+**Q: Can route parameters be validated before the fragment renders?**  
+A: Route validation happens in controller lifecycle methods (typically `@OnMount`). The routing system matches paths and renders fragments before controller code executes, so validation must occur in the controller and handle invalid cases appropriately (e.g., redirect to error page).
+
+**Q: How can default or fallback routes be created?**  
+A: Configure a catch-all route in the Route Manager that matches when no other routes do. This typically uses a wildcard pattern or a very general path that serves as the fallback.
+
+**Q: Are route paths case-sensitive?**  
+A: Yes, route paths are case-sensitive. `/Users` and `/users` are treated as different routes.
+
+**Q: Can route parameters contain special characters?**  
+A: Route parameters should contain only alphanumeric characters, hyphens, and underscores. Special characters should be URL-encoded. Always validate and sanitize parameters in controllers before use.
+
+## Related Resources
+
+* [Fragments](./fragments.mdx) - Learn about fragments and their structure
+* [Controllers](./controllers.mdx) - Working with fragment controllers
+* [HistoryService Reference](./../services/history-service.mdx) - Full API reference for the service
+* [Application Lifecycle](./application-lifecycle.mdx) - Understanding application initialization
+* [Fragment Communication](./fragment-communication.mdx) - Communication patterns between fragments

@@ -1,0 +1,90 @@
+---
+sidebar_label: Creating a formatter
+title: Creating a formatter
+---
+
+import Admonition from '@theme/Admonition';
+import CodeBlock from '@theme/CodeBlock';
+
+One of Oswald's key features is its extensibility, meaning that users have the ability to expand the available list of formatters to fit their specific needs. Oswald achieves this by allowing users to create their own custom formatters, using established patterns that seamlessly integrate with the editor.
+
+To get started, let's take a simple formatter as an example, the formatter is called `Domain`.
+
+To define the `Domain` formatter, the underlying structure must follow Oswald's approach of defining the formatter return type, with a single file to register the formatter.
+
+```tsx title="/src/formatter/domain.ts"
+import { oneOf } from '@philips-internal/oswald-ui-core/lib/component/prop-types/index.js';
+import { MessageService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import type { Formatter, Validation } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { DomainFormatter } from '../constants.js';
+
+interface DomainFormatterOptions {
+  name?: string;
+}
+
+const DOMAIN_FORMATTER = 'domain';
+
+const DOMAINS: Record<string, string> = {
+  [DomainFormatter.USER_ROLE]: 'user.role',
+  [DomainFormatter.PERSON_GENDER]: 'person.gender',
+};
+
+function format(value: string | number, options: DomainFormatterOptions = {}): string {
+  const { name } = options;
+
+  if (value && name) {
+    return MessageService.translate(`${DOMAINS[name]}.${value}`);
+  }
+
+  return '';
+}
+
+format.optionTypes = {
+  name: oneOf(['', ...Object.keys(DOMAINS)]),
+};
+
+function getPattern(): string | RegExp {
+  throw new Error('Method not implemented.');
+}
+
+function validate(value: string | number): Validation[] {
+  return [{ valid: !!value }] as Validation[];
+}
+
+function parse(value: string | number): string | number {
+  return value;
+}
+
+const domainFormatter: Formatter<string | number, DomainFormatterOptions> = {
+  format,
+  getPattern,
+  parse,
+  validate,
+};
+
+export {
+  DOMAIN_FORMATTER,
+  domainFormatter,
+};
+```
+
+### Register
+
+Once the custom formatter is defined and implemented, it must be imported and registered. This step is critical for other developers to use the formatter in their applications.
+
+In this step the formatter must also be registered within Oswald's using the `ModelService.registerFormatter` function. It makes them available for use in other components properties.
+
+```tsx title="/src/formatter/index.ts"
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { DOMAIN_FORMATTER, domainFormatter } from './domain.js';
+
+ModelService.registerFormatter(DOMAIN_FORMATTER, domainFormatter);
+```
+
+<Admonition type="caution">
+  By importing the `./formatters/index.js` file into your application's root file, the formatter will be available within the application, but not within the editor.
+  
+  For it to be available in both, the formatters must be created in a separate package and imported into the application's root file, and listed as a dependency in the `dependencies.components` property of the `.oswaldrc.json` file.
+</Admonition>

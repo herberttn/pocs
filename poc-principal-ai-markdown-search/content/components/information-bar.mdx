@@ -1,0 +1,48 @@
+---
+sidebar_label: InformationBar
+---
+
+import Details from '@theme/Details';
+
+# `InformationBar`
+
+The goal of this component is to provide a simple way to display a diversity amount of information about something. For example, information about a patient, such as his name, allergies, personal information, etc.
+
+For instructions on what situations to use the component, and rules regarding its design please refer to the [Philips EMR design specification](http://design.emr.philips.com.br).
+
+### Examples
+
+<Details open summary={<summary>Example: <code>setting information bar data</code></summary>}>
+```tsx
+@Controller({ fragment: FragmentNames.INFORMATION_BAR })
+export default class InformationBarController {
+
+  @Inject(InformationBarAliases.INFORMATION_BAR)
+  declare informationBarAPI: InformationBarAPI;
+
+  @OnAfterFetch(InformationBarAliases.MAIN_FETCH)
+  onAfterFetch(event: FetchEvent): void {
+    /**
+     * Alternatively, if the API returns a complete object with the information bar props directly,
+     * setting the Fetch component as the InformationBar parent in the component tree will be sufficient to configure it.
+     * Otherwise use the component API to set them individually.
+     */
+    if (event.data) {
+      const data = event.data as InformationBarProps;
+
+      this.informationBarAPI.setAlerts(data.alerts ?? {});
+      this.informationBarAPI.setAlertsTitle(data.alertsTitle ?? '');
+      this.informationBarAPI.setExtraInformation(data.extraInformation ?? {});
+      this.informationBarAPI.setExtraInformationTitle(data.extraInformationTitle ?? '');
+      this.informationBarAPI.setFieldOneTitle(data.fieldOneTitle ?? '');
+      this.informationBarAPI.setFieldOneValue(data.fieldOneValue ?? '');
+      this.informationBarAPI.setFieldOneHighlight(true);
+      this.informationBarAPI.setStickToTop(true);
+      this.informationBarAPI.setTitle(data.title);
+    }
+  }
+}
+```
+</Details>
+
+A complete example of the full composition capabilities of the `InformationBar` can be found at its [samples module](pathname:///../sample/application/information-bar).

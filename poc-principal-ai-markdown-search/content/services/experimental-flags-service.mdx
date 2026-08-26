@@ -1,0 +1,35 @@
+---
+sidebar_label: ExperimentalFlagsService
+---
+
+# `ExperimentalFlagsService`
+
+The purpose of the service is to simplify the use of experimental flags within Oswald. By providing an environment for proof of concept implementations, the development team can avoid potential issues that could negatively impact the larger userbase of the framework.
+
+The use of experimental flags can be configured by using [Oswald's Experimental Flags manager](../editor/managers/experimental-flags-manager.mdx)
+
+The service offers two types of methods for interaction. The first are [Main methods](#main-methods), which allow users to interact with the service directly and access its general state. The second are [Flag methods](#flag-methods), which enable users to retrieve the current value of a specific flag.
+
+###  Main methods
+
+#### `getFlags`
+
+This method returns a map containing all of Oswald's available experimental flags.
+
+#### `hasBeenInitialized`
+
+This method checks whether the service has been initialized or not.
+
+#### `initialize`
+
+This method initializes the service and provides the value for each flag.
+
+### Flag methods
+
+#### `getMapperOnlyPropagateMappedKeys`
+
+This flag modifies the behavior of the Mapper component. When enabled, the Mapper component will only pass the mapped keys, rather than the entire data object.
+
+#### `getSpreaderConsiderValueInsteadOfData`
+
+This flag modifies the behavior of the Spreader component. When enabled, the Spreader component will use the `value` property as the source for selecting entries to be spreaded.

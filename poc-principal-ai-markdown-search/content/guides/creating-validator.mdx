@@ -1,0 +1,73 @@
+---
+sidebar_label: Creating a validator
+title: Creating a validator
+---
+
+import Admonition from '@theme/Admonition';
+import CodeBlock from '@theme/CodeBlock';
+
+One of Oswald's key features is its extensibility, meaning that users have the ability to expand the available list of validators to fit their specific needs. Oswald achieves this by allowing users to create their own custom validators, using established patterns that seamlessly integrate with the editor.
+
+To get started, let's take a simple validator as an example, the validator is called `Custom`.
+
+To define the `Custom` validator, the underlying structure must follow Oswald's approach of defining the validator return type, with a single file to register the validator.
+
+```tsx title="/src/validators/custom.ts"
+import { string } from '@philips-internal/oswald-ui-core/lib/component/prop-types/index.js';
+import type { Value } from '@philips-internal/oswald-ui-core';
+import type { Validation } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const CUSTOM_VALIDATOR = 'customValidator';
+
+interface CustomValidatorOptions {
+  foo?: string;
+}
+
+/**
+ * This custom validador only verifies if the value is a boolean value.
+ * @param value - value to be validated
+ * @param options - options configured in Oswald's editor
+ */
+async function customValidator(value: Value, options: CustomValidatorOptions): Promise<Validation[]> {
+  const valid = Boolean(value);
+
+  return [{
+    message: valid ? '' : 'custom-validator.message',
+    name: CUSTOM_VALIDATOR,
+    valid,
+  }];
+}
+
+customValidator.optionTypes = {
+  foo: string,
+};
+
+export {
+  CUSTOM_VALIDATOR,
+  customValidator,
+};
+```
+
+<Admonition type="caution">
+  If a validation takes more than 500ms to complete they will be timed out.
+</Admonition>
+
+### Register
+
+Once the custom validator is defined and implemented, it must be imported and registered. This step is critical for other developers to use the validator in their applications.
+
+In this step the validator must also be registered within Oswald's using the `ModelService.registerValidator` function. It makes them available for use in the property of the component `Field`.
+
+```tsx title="/src/validators/index.ts"
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+import { CUSTOM_VALIDATOR, customValidator } from './custom.js';
+
+ModelService.registerValidator(CUSTOM_VALIDATOR, customValidator);
+```
+
+<Admonition type="caution">
+  By importing the `./validators/index.js` file into your application's root file, the validator will be available within the application, but not within the editor.
+  
+  For it to be available in both, the validators must be created in a separate package and imported into the application's root file, and listed as a dependency in the `dependencies.components` property of the `.oswaldrc.json` file.
+</Admonition>

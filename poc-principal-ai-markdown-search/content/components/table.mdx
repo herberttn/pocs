@@ -1,0 +1,67 @@
+---
+sidebar_label: Table
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `Table`
+
+The Table component is a versatile and customizable solution for displaying tabular data in a web application. Designed to handle large datasets efficiently, it offers a range of features to enhance data visualization and interactivity.
+
+## Functionalities
+
+This section will briefly describe the main functionalities of the Table component, a more in depth guide on how to use the component can be found in the [guide](../guides/editor/table) section.
+
+### Row selection
+
+To enable row selection, set the `selectionType` property of the `Table` component to either `single` or `multiple`. With the property set, clicking on a row will select or unselect it and emit a `SelectItemEvent` with information about the selected row.
+
+When the selection type is `single`, clicking on a row will unselect the previously selected row and select the clicked row. When the selection type is `multiple`, a checkbox column will be added to the table to indicate the selected rows.
+
+### Sorting
+
+To enable sorting for a column, the `sortable` property must be set to `true` in the `TableColumn` component. With the property set, the column will display a sort indicator when clicked directly on the column header or through the column header context menu and emit a `SortEvent` with information about the column and the sort direction.
+
+<Admonition type="note">
+  The table itself will not sort the data, it will only emit a `SortEvent` which can be listened in the controller. The controller will be responsible for sorting the data and updating the table.
+</Admonition>
+
+### Grouping
+
+Group table data using the `grouping` property. Example: `['job']` groups rows by the job column.
+
+<figure>
+  ![Table grouping property](./../../assets/components/table/table-grouping-property.png)
+  <figcaption>Figure 1 - Table grouping property</figcaption>
+</figure>
+
+<figure>
+  ![Table grouped](./../../assets/components/table/table-grouped.png)
+  <figcaption>Figure 2 - Table grouped</figcaption>
+</figure>
+
+<Admonition type="note">
+  Grouping a table will disabled the rendering of sub rows.
+</Admonition>
+
+### Enable pin columns
+
+To enable a column pinning, set the `pinnable` property to `true` in the `TableColumn` component. With the property set, an option will be added to the column header context menu to pin the column to the left or right.
+
+### Resizable columns
+
+To enable column resizing, set the `resizable` property to `true` in the `TableColumn` component. With the property set, the column will display a resize handle when hovered over the column header.
+
+### Dynamic column
+
+The table supports the rendering of dynamic content columns. To render a dynamic column, add a `TableColumn` of `dynamic` type. With the column added, the `onDynamicContentRender` event must be implemented and expect a render of type `column`.
+
+### Actions column
+
+To add an actions column to the table, set the property `withActions` to `true` in the `Table` component. With the property set, an actions column will be added to the table, its content can be customized the same way as the dynamic column, by having the `onDynamicContentRender` event implemented and expecting a render of type `action`.
+
+
+### Samples
+
+A complete example of the component in use, including custom column rendering, can be found in Oswald's [sample application](pathname:///../sample/application/table).

@@ -1,0 +1,26 @@
+---
+sidebar_label: IconSwitcher
+---
+
+import Details from '@theme/Details';
+
+# `IconSwitcher`
+
+The component goal is to provide a simple way to display an icon based on some conditional value. For example, within cards that may display exam results, we want an icon that can convey the current state of the exam, if it is done, still being processed or any other state.
+
+To achieve this, the component expects a simple key-value map, where the key will be checked against the component value and will display the icon if matched.
+
+<Details open summary={<summary>Example: <code>Icons</code></summary>}>
+  ```json5
+  [
+    { value: "alarm", label: "example.alarm", color: "--color-red-45", src: "/static/assets/path/to/alarm.svg" },
+    { value: "cancel", label: "example.cancel", color: "--color-blue-45", src: "/static/assets/path/to/cancel.svg" },
+    { value: "clock", label: "example.clock", color: "--color-gray-45", src: "/static/assets/path/to/clock.svg" },
+    { value: "warning", label: "example.warning", color: "--color-yellow-45", src: "/static/assets/path/to/warning.svg" },
+  ]
+  ```
+</Details>
+
+### Fallback icon
+
+It is also possible for the component to display a fallback icon, using the same structure as previously stated, which will be displayed if there's no match for the component value against the provided set of icons.

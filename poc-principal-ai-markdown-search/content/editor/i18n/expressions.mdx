@@ -1,0 +1,127 @@
+---
+title: Expressions
+sidebar_label: Expressions
+---
+
+import Admonition from '@theme/Admonition';
+
+## Configuration
+
+Before using i18n features, the support languages must be configured. This is done in the [`.oswaldrc.json`](../../configuration/oswaldrc.md) file under the [`i18n.languages`](../../configuration/oswaldrc.md#i18nlanguages-1) property.
+
+The configuration requires two settings:
+
+* `defaultLanguage` - The fallback language used when the preferred language is not available
+* `supportedLanguages` - All languages the application supports
+
+### Example configuration
+
+```
+  "i18n": {
+    "languages": {
+      "defaultLanguage": "en-us",
+      "supportedLanguages": [
+        "en-uk",
+        "en-us",
+        "es-co",
+        "pt-br",
+        "pt-pt"
+      ]
+    }
+  }
+```
+
+<Admonition type="note">
+  The `defaultLanguage` must be present in the `supportedLanguages` array.
+
+  Additionally, for each language listed in `supportedLanguages`, a corresponding message file must exist in `resources/messages`.
+  Missing files will cause a build error.
+</Admonition>
+
+## How i18n Works in Oswald
+
+Oswald's i18n implementation is based on a properties file system where translation strings (called expressions) are defined in language-specific files. The framework handles language detection, fallback logic and string interpolation automatically.
+
+### Message files
+
+Translation expressions are stored in `messages_{language}.properties` files within the application `resources/messages` folder. Files follow a naming convention that supports both base languages and country-specific variants, for example:
+
+* Base language files:
+  * `messages_en.properties`
+  * `messages_pt.properties`
+  * `messages_es.properties`
+
+* Country-specific files:
+  * `messages_en-us.properties`
+  * `messages_en-uk.properties`
+  * `messages_pt-br.properties`
+  * `messages_pt-pt.properties`
+  * `messages_es-co.properties`
+
+Country-specific files act as supersets of their base language files. They inherit all expressions from the base file and can override specific translations to accommodate regional differences (e.g., "color" vs "colour", "apartment" vs "flat").
+
+### Defining Expressions
+
+Expressions are defined using a key-value format in properties files. Keys use dot notation for namespacing, and values support parameter interpolation
+
+```
+module.title = Application
+module.inner-module = Rooms
+module.inner-module.empty-rooms = ${rooms} available rooms
+```
+
+```
+module.title = Aplicação
+module.inner-module = Quartos
+module.inner-module.empty-rooms = ${rooms} quartos disponíveis
+```
+
+### Using Expressions in Code
+
+Developers access translations through the [`MessageService`](../../services/message-service.mdx), which provides a `translate` method for retrieving localized strings.
+
+#### Basic translation
+
+```
+MessageService.translate('module.inner-module'); // Returns "Rooms" (for English users)
+```
+
+#### Translation with parameters
+
+```
+MessageService.translate('module.inner-module.empty-rooms', { rooms: 5 }); // Returns "5 available rooms" (for English users)
+```
+
+The `translate` method automatically uses the current language and performs interpolation when values are provided.
+
+### Working with expressions in the Editor
+
+Oswald's editor provides an intuitive interface for working with translations. Developers can:
+
+* **Direct expression input**: Enter expression keys directly into component property fields
+
+<figure>
+  ![Expression input](./../../../assets/editor/i18n/expressions-input.png)
+  <figcaption>Figure 1 - Expression key directly into property field.</figcaption>
+</figure>
+
+* **Expression Intellisense**: Click the Intellisense action button on expression properties to open a searchable modal of all available expressions
+
+<figure>
+  ![Intellisense action](./../../../assets/editor/i18n/expressions-intellisense-action.png)
+  <figcaption>Figure 2 - Expressions through Intellisense action.</figcaption>
+</figure>
+
+<figure>
+  ![Intellisense modal](./../../../assets/editor/i18n/expressions-search.png)
+  <figcaption>Figure 3 - Intellisense modal.</figcaption>
+</figure>
+
+* **Visual feedback**: The editor displays translated values in the current working language, making it easy to preview localized content
+
+<figure>
+  ![Expression preview in the editor](./../../../assets/editor/i18n/expressions-preview.png)
+  <figcaption>Figure 4 - Expression preview in the editor.</figcaption>
+</figure>
+
+This visual workflow makes it simple to discover and apply existing translations without leaving the editor interface.

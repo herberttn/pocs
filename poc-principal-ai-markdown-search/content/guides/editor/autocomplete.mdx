@@ -1,0 +1,207 @@
+---
+title: Autocomplete
+sidebar_label: Autocomplete
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+The Autocomplete component enables users to search data from a remote, or local, datasource, presenting users with the relevant results as the query is typed.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `Autocomplete` a fragment with the components `Layout` and `ContextualBar` will be used.
+<figure>
+  ![Initial Tree](./../../../assets/guides/autocomplete/autocomplete-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+### How to use
+
+  1. In the components tab, search for `Form` and drag it into the `ContextualBar` > `content` area. Change the property `alias` to `autocomplete-form`. Check the properties `disabled` and `editing`.
+  <figure>
+  ![Create Form](./../../../assets/guides/autocomplete/autocomplete-form.gif)
+  <figcaption>Figure 2 - Create Form</figcaption>
+  </figure>
+
+  2. Inside the `autocomplete-form` include a new `Field` component. 
+  <figure>
+  ![Create Field](./../../../assets/guides/autocomplete/autocomplete-field.gif)
+  <figcaption>Figure 3 - Create Field</figcaption>
+  </figure>
+
+  2.1 Change the `Field` properties as follows:
+  - `alias` = `autocomplete-field`
+  - `label` = `People`
+  - `entry` = `state`
+  - `width` = 12
+  - `alwaysShowLabel` = true (checked)
+
+  3. Add the `Fetch` component inside the `Field` that was created in the step above.
+  <figure>
+  ![Create Fetch](./../../../assets/guides/autocomplete/autocomplete-fetch.gif)
+  <figcaption>Figure 4 - Create Fetch</figcaption>
+  </figure>
+
+  4. In the properties tab, change the property `alias` to `autocomplete-fetch` and the property `endpoint` to `/api/people`. This will fetch the people.
+  <figure>
+  ![Fetch Properties](./../../../assets/guides/autocomplete/autocomplete-fetch-properties.png)
+  <figcaption>Figure 5 - Fetch Properties</figcaption>
+  </figure>
+
+  5. Now in the components tab, search for `Autocomplete` and drag it into the `autocomplete-fetch`.
+  <figure>
+  ![Create Autocomplete](./../../../assets/guides/autocomplete/create-autocomplete.gif)
+  <figcaption>Figure 6 - Create Autocomplete</figcaption>
+  </figure>
+
+  5.1 Change the `Autocomplete` properties as follows:
+  - `alias` = `autocomplete-people`
+  - `emptyResultExpression` = `not-found`
+  - `placeholder` = `placeholder`
+  - `title` = `title`
+  - `entry` = `name`
+  - `limit` = 8
+  - `localdata` = true (checked)
+  - `queryKey` = `name`
+
+  6. Add the `Mapper` component as a child of the `Autocomplete` component.
+  <figure>
+  ![Create Mapper](./../../../assets/guides/autocomplete/autocomplete-mapper.gif)
+  <figcaption>Figure 7 - Create Mapper</figcaption>
+  </figure>
+
+  6.1 Change the property `alias` to `autocomplete-mapper` and `component` to `Text`. Also, change the `map` property as follows:
+  <figure>
+  ![Mapper Properties](./../../../assets/guides/autocomplete/autocomplete-mapper-map.png)
+  <figcaption>Figure 8 - Mapper Properties</figcaption>
+  </figure>
+
+  <Admonition type="note">
+  For more information on how both the `Fetch` and `Mapper` components can work in tandem, refer to the [Listing cards](./fetch-mapper-deck.mdx) guide.
+  </Admonition>
+
+  7. In the components tab, search for `Text` and drag it into the `Mapper` component.
+  <figure>
+  ![Create Text](./../../../assets/guides/autocomplete/autocomplete-text.gif)
+  <figcaption>Figure 9 - Create Text</figcaption>
+  </figure>
+
+### Accessing the fragment
+
+To access the fragment, a route `/application/form` was created using Oswald's Route Manager. For instructions on how to use it, refer to the [Route Manager](./routes.mdx).
+When accessing the route, the fetch process will execute, and upon receiving the result from the configured endpoint, the `Autocomplete` will render the mapped data.
+<figure>
+![Autocomplete Application](./../../../assets/guides/autocomplete/autocomplete-application.gif)
+<figcaption>Figure 10 - Autocomplete Application</figcaption>
+</figure>
+
+When the `Autocomplete`'s `multiSelect` property is checked, it's possible select more than one option.
+<figure>
+![Autocomplete Multiselect](./../../../assets/guides/autocomplete/autocomplete-multiselect.gif)
+<figcaption>Figure 11 - Autocomplete Multiselect</figcaption>
+</figure>
+
+<Details summary={<summary>Autocomplete Fragment: <code>autocomplete.osw</code> </summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-autocomplete",
+      "uuid": "055d8d6f-5e38-4a41-a933-98e9a64eb888",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "ContextualBar",
+        "props": {
+          "alias": "contextual-bar-autocomplete",
+          "uuid": "8e431255-54d6-46c8-8d74-e8807e95d2b0",
+          "slot": "content",
+          "title": "Autocomplete"
+        },
+        "children": [
+          {
+            "type": "Form",
+            "props": {
+              "alias": "autocomplete-form",
+              "uuid": "2426aa23-36f4-44cd-849e-0b67289ca5a8",
+              "disabled": true,
+              "editing": true,
+              "slot": "content"
+            },
+            "children": [
+              {
+                "type": "Field",
+                "props": {
+                  "alias": "autocomplete-field",
+                  "uuid": "c7cbe02f-5837-40d9-8b55-8ea0262f0147",
+                  "alwaysShowLabel": true,
+                  "label": "People",
+                  "width": 11,
+                  "entry": "state"
+                },
+                "children": [
+                  {
+                    "type": "Fetch",
+                    "props": {
+                      "alias": "autocomplete-fetch",
+                      "uuid": "4355944a-3670-4080-9695-6e12d2dfa204",
+                      "endpoint": "/api/people"
+                    },
+                    "children": [
+                      {
+                        "type": "Autocomplete",
+                        "props": {
+                          "alias": "autocomplete-people",
+                          "uuid": "5137f529-eedd-4329-997b-40bdcf855fff",
+                          "entry": "name",
+                          "limit": 8,
+                          "localData": true,
+                          "multiselect": true,
+                          "queryKey": "name",
+                          "placeholder": "placeholder",
+                          "emptyResultExpression": "tws.not-found.results-not-found",
+                          "title": "modal.title"
+                        },
+                        "children": [
+                          {
+                            "type": "Mapper",
+                            "props": {
+                              "alias": "autocomplete-mapper",
+                              "uuid": "1cf73b36-b63a-4f64-8fac-13a302b7081e",
+                              "map": {
+                                "value": "name"
+                              },
+                              "component": "Text"
+                            },
+                            "children": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "alias": "autocomplete-text",
+                                  "uuid": "fd053f9e-1648-46a8-9dc8-458391c4ce05"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "autocomplete"
+}
+```
+</Details>

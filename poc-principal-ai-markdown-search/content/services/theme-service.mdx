@@ -1,0 +1,287 @@
+---
+sidebar_label: ThemeService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `ThemeService`
+
+The service offers a comprehensive set of methods to assist developers in meeting their design requirements.
+
+With some extra configuration, the service also provides support themes that are not in the default set. For more details on how to configure it, see [Custom colors](#custom-colors)
+
+## Methods
+
+### `applyCustomTheme`
+
+Applies a custom theme to the application. It must be previously registered using the `registerCustomTheme` method.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Setting a custom theme</code></summary>}>
+```tsx
+ThemeService.applyCustomTheme('themeId');
+```
+</Details>
+
+### `deleteCustomTheme`
+
+Sends a `DELETE` request to the endpoint configured in the [`oswaldrc.json`](../configuration/oswaldrc.md#customization) file to delete a custom theme.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Deleting a custom theme</code></summary>}>
+```tsx
+await ThemeService.deleteCustomTheme('themeId');
+```
+</Details>
+
+### `getColorFromString`
+
+Gets a `ThemeColor` value from a string or returns `undefined` if it does not exist in the preset.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get a `ThemeColor` typed variable</code></summary>}>
+```tsx
+const color = ThemeService.getColorFromString('blue');
+```
+</Details>
+
+### `getSupportedAccents`
+
+Gets the supported accent colors for the given color.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get `AQUA` supported accent colors</code></summary>}>
+```tsx
+const aquaAccentColors = ThemeService.getSupportedAccents(ThemeColor.AQUA);
+```
+</Details>
+
+### `getTheme`
+
+Gets the current theme of the application.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get the application's theme</code></summary>}>
+```tsx
+const theme = ThemeService.getTheme();
+```
+</Details>
+
+### `getTonalRangeFromString`
+
+Gets a `ThemeTonalRange` value from a string or returns `undefined` if it does not exist in the preset.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Get a `ThemeTonalRange` typed variable</code></summary>}>
+```tsx
+const tonalRange = ThemeService.getTonalRangeFromString('bright');
+```
+</Details>
+
+### `registerCustomTheme`
+
+Registers a custom theme to be used in the application.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Register a custom theme</code></summary>}>
+```tsx
+ThemeService.registerCustomTheme('themeId', 'https://example.com/theme.css');
+```
+</Details>
+
+### `removeTheme`
+
+Removes the specified theme configurations from the application.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Reset the theme to default</code></summary>}>
+```tsx
+function bootstrap(): void {
+  ThemeService.removeTheme({
+    accentColor: true,
+    color: true,
+    content: true,
+    navigation: true,
+  });
+}
+```
+</Details>
+
+### `saveCustomTheme`
+
+Sends a `POST` request to the endpoint configured in the [`oswaldrc.json`](../configuration/oswaldrc.md#customization) file to save a custom theme.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Saving a custom theme</code></summary>}>
+```tsx
+const css = `
+  :root {
+    --color-primary: #000;
+  }
+`;
+
+await ThemeService.saveCustomTheme('themeId', css);
+```
+</Details>
+
+### `setColors`
+
+Sets the application theme colors to one of the preset colors. 
+
+<Admonition type="note">
+  The accent color must be one of the supported colors for the theme color, otherwise it will throw an error.
+</Admonition>
+
+#### Example
+
+<Details summary={<summary>Example: <code>Setting the theme to `GROUP_BLUE` with `GREEN` accent color</code></summary>}>
+```tsx
+function bootstrap(): void {
+  ThemeService.setColors(ThemeColor.GROUP_BLUE, ThemeColor.GREEN);
+}
+```
+</Details>
+
+### `setContentTonalRange`
+
+Sets the application content tonal range.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Setting the tonal range to `VERY_DARK`</code></summary>}>
+```tsx
+function bootstrap(): void {
+  ThemeService.setContentTonalRange(ThemeTonalRange.VERY_DARK);
+}
+```
+</Details>
+
+### `setCustomColors`
+
+Sets the application theme colors, accepting both a preset color or a custom color.
+
+<Admonition type="note">
+  Check [custom colors](#custom-colors) for more information on the requirements to use this method with custom colors.
+</Admonition>
+
+#### Example
+
+<Details summary={<summary>Example: <code>Setting the theme to `violet` with `ORANGE` accent color</code></summary>}>
+```tsx
+function bootstrap(): void {
+  ThemeService.setCustomColors('violet', ThemeColor.ORANGE);
+}
+```
+</Details>
+
+### `setNavigationTonalRange`
+
+Sets the application navigation tonal range.
+
+#### Example
+
+<Details summary={<summary>Example: <code>Setting navigation tonal range to `VERY_DARK`</code></summary>}>
+```tsx
+function bootstrap(): void {
+  ThemeService.setNavigationTonalRange(ThemeTonalRange.VERY_DARK);
+}
+```
+</Details>
+
+## Custom colors
+
+To begin customizing colors, start by establishing the pattern URL for [stylesheets](../configuration/oswaldrc.md#customizationstylesheets) within the `oswaldrc.json` file.
+
+Once this configuration is in place, using the `ThemeService.setCustomColors` method will dynamically insert a link to a CSS file with a name corresponding to the selected color, using the specified configuration's URL pattern. Furthermore, the viewport will be assigned the classes `t-color-{color-name}` and `t-color-accent-{accent-color-name}`.
+
+Ensure that the corresponding CSS file contains overrides for CSS color variables, allowing the intended color modifications to take effect seamlessly.
+
+<Admonition type="note">
+  Support is limited only to HSL values.
+</Admonition>
+
+### Example
+
+<Details summary={<summary>Example file for: <code>custom-purple</code></summary>}>
+```css
+:root {
+  --color-custom-purple-100: 265, 50%, 0%;
+  --color-custom-purple-90: 265, 50%, 5%;
+  --color-custom-purple-85: 265, 50%, 10%;
+  --color-custom-purple-80: 265, 50%, 15%;
+  --color-custom-purple-75: 265, 50%, 20%;
+  --color-custom-purple-70: 265, 50%, 25%;
+  --color-custom-purple-65: 265, 50%, 30%;
+  --color-custom-purple-60: 265, 50%, 35%;
+  --color-custom-purple-55: 265, 50%, 40%;
+  --color-custom-purple-50: 265, 50%, 45%;
+  --color-custom-purple-45: 265, 50%, 50%;
+  --color-custom-purple-40: 265, 50%, 55%;
+  --color-custom-purple-35: 265, 50%, 60%;
+  --color-custom-purple-30: 265, 50%, 65%;
+  --color-custom-purple-25: 265, 50%, 70%;
+  --color-custom-purple-20: 265, 50%, 75%;
+  --color-custom-purple-15: 265, 50%, 80%;
+  --color-custom-purple-10: 265, 50%, 85%;
+  --color-custom-purple-5: 265, 50%, 95%;
+  --color-custom-purple-0: 265, 50%, 100%;
+}
+
+.t-color-custom-purple {
+  --color-100: var(--color-custom-purple-100);
+  --color-90: var(--color-custom-purple-90);
+  --color-85: var(--color-custom-purple-85);
+  --color-80: var(--color-custom-purple-80);
+  --color-75: var(--color-custom-purple-75);
+  --color-70: var(--color-custom-purple-70);
+  --color-65: var(--color-custom-purple-65);
+  --color-60: var(--color-custom-purple-60);
+  --color-55: var(--color-custom-purple-55);
+  --color-50: var(--color-custom-purple-50);
+  --color-45: var(--color-custom-purple-45);
+  --color-40: var(--color-custom-purple-40);
+  --color-35: var(--color-custom-purple-35);
+  --color-30: var(--color-custom-purple-30);
+  --color-25: var(--color-custom-purple-25);
+  --color-20: var(--color-custom-purple-20);
+  --color-15: var(--color-custom-purple-15);
+  --color-10: var(--color-custom-purple-10);
+  --color-5: var(--color-custom-purple-5);
+  --color-0: var(--color-custom-purple-0);
+}
+
+.t-color-accent-custom-purple {
+  --color-accent-100: var(--color-custom-purple-100);
+  --color-accent-90: var(--color-custom-purple-90);
+  --color-accent-85: var(--color-custom-purple-85);
+  --color-accent-80: var(--color-custom-purple-80);
+  --color-accent-75: var(--color-custom-purple-75);
+  --color-accent-70: var(--color-custom-purple-70);
+  --color-accent-65: var(--color-custom-purple-65);
+  --color-accent-60: var(--color-custom-purple-60);
+  --color-accent-55: var(--color-custom-purple-55);
+  --color-accent-50: var(--color-custom-purple-50);
+  --color-accent-45: var(--color-custom-purple-45);
+  --color-accent-40: var(--color-custom-purple-40);
+  --color-accent-35: var(--color-custom-purple-35);
+  --color-accent-30: var(--color-custom-purple-30);
+  --color-accent-25: var(--color-custom-purple-25);
+  --color-accent-20: var(--color-custom-purple-20);
+  --color-accent-15: var(--color-custom-purple-15);
+  --color-accent-10: var(--color-custom-purple-10);
+  --color-accent-5: var(--color-custom-purple-5);
+  --color-accent-0: var(--color-custom-purple-0);
+}
+
+```
+</Details>

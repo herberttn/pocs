@@ -1,0 +1,150 @@
+---
+title: External Expressions and Domains
+sidebar_label: External Expressions
+---
+
+import Admonition from '@theme/Admonition';
+
+Oswald supports importing and synchronizing expressions and domains from Tasy. This allows applications to share a common translation base and maintain consistency across both systems.
+
+## Configuration
+
+External expressions are configured through the [`.oswaldexpc.json`](../../configuration/oswaldexpc.md) file, which defines:
+
+* The endpoint of the service for searching expressions and domains
+* A registry of imported expressions and domains with their Tasy ID mappings
+
+Example `.oswaldexpc.json`
+
+```
+{
+  "domains": {
+    "person.gender": "4"
+  },
+  "endpoint": "http://srv-jks-tech-01.whebdc.com.br:3069/",
+  "expressions": {
+    "@person.gender": "663914",
+    "@person.gender/d": "959500",
+    "@person.gender/f": "290058",
+    "@person.gender/i": "1130746",
+    "@person.gender/m": "292932"
+  }
+}
+```
+
+### Service Access
+
+The service that interacts with Tasy expressions is deployed at [`http://srv-jks-tech-01.whebdc.com.br:3069/`](http://srv-jks-tech-01.whebdc.com.br:3069/) and can only be accessed when connected to the **Philips EMR VPN**
+
+<Admonition type="note">
+  Importing and updating external expressions requires an active connection to the Philips EMR network. Without access, the framework will be unable to retrieve expression data from Tasy, and these operations will fail.
+</Admonition>
+
+Ensure connectivity is established before attempting to import or update external expressions through either the editor or CLI.
+
+## Domains and Expressions
+
+Domains are a predefined set of related values with specific meanings. Each domain is identified by a numeric ID in Tasy and mapped to a key in Oswald.
+
+Domain expressions follow a special naming convention using the `@` prefix and use the `/` separator for enumerated values:
+
+* `⁠@person.gender` - The domain label itself
+* `⁠@person.gender/m` - Male option
+* `⁠@person.gender/f` - Female option
+
+In message files:
+
+```
+// messages_en.properties
+@person.gender=Check-up by gender
+@person.gender/f=Female
+@person.gender/m=Male
+
+// messages_pt.properties
+@person.gender=Check-up sexo
+@person.gender/f=Feminino
+@person.gender/m=Masculino
+```
+
+## Importing and Updating
+
+Besides configuration, the `.oswaldexpc.json` file serves an extra purpose as an **ID Registry**, maintaining the mapping between Oswald expression keys and Tasy numeric IDs, enabling the framework to reference and synchronize the correct expressions.
+
+### Importing
+
+When importing expressions from Tasy, the framework:
+
+* Retrieves the expression content from the configured service endpoint
+* Maps the Tasy ID to the specified Oswald key
+* Stores the mapping in `.oswaldexpc.json` for future reference
+* Adds the translated content to the appropriate message files
+
+Expressions and domains can be imported in the following ways:
+
+* **Through the Editor**:
+  * Opening the Intellisense Modal by interacting with expression component property fields
+
+  <figure>
+    ![Intellisense icon in properties panel](./../../../assets/editor/i18n/expressions-intellisense-action.png)
+    <figcaption>Figure 1 - Intellisense icon in properties panel.</figcaption>
+  </figure>
+
+  * Opening the Intellisense Modal by interacting with Oswald's Spotlight
+
+  <figure>
+    ![Spotlight item to open Expressions Intellisense modal](./../../../assets/editor/i18n/external-expressions-spotlight.png)
+    <figcaption>Figure 2 - Spotlight item to open Expressions Intellisense modal.</figcaption>
+  </figure>
+
+  <figure>
+    ![Intellisense Expressions modal](./../../../assets/editor/i18n/external-expressions-search.png)
+    <figcaption>Figure 3 - Intellisense Expressions modal.</figcaption>
+  </figure>
+
+  <figure>
+    ![Spotlight item to open Domains Intellisense modal](./../../../assets/editor/i18n/external-domains-spotlight.png)
+    <figcaption>Figure 4 - Spotlight item to open Domains Intellisense modal.</figcaption>
+  </figure>
+
+  <figure>
+    ![Intellisense Domains modal](./../../../assets/editor/i18n/external-domains-search.png)
+    <figcaption>Figure 5 - Intellisense Domains modal.</figcaption>
+  </figure>
+
+* **Through the CLI**: Using Oswald's CLI [`oswald expressions`](../../cli/oswald-expressions.md)
+
+### Updating
+
+To synchronize external expressions with their latest versions in Tasy, the framework performs an update process that:
+
+* Reads all mapped keys from the `.oswaldexpc.json` registry
+* Queries the configured service endpoint for each mapped expression and domain ID
+* Compares the retrieved content with the current values in message files
+* Updates the message files only when differences are detected, preserving unchanged translations
+
+Updates can be triggered in the following ways:
+
+* **Through the Editor**: Using the `Expressions` > `Update Expressions` menu item
+
+<figure>
+  ![Update Expressions menu item](./../../../assets/editor/i18n/external-expressions-update-1.png)
+  <figcaption>Figure 6 - Update Expressions menu item.</figcaption>
+</figure>
+
+<figure>
+  ![Loading message while expressions are updated](./../../../assets/editor/i18n/external-expressions-update-2.png)
+  <figcaption>Figure 7 - Loading message while expressions are updated.</figcaption>
+</figure>
+
+* **Through the CLI**: Using Oswald's CLI [`oswald expressions`](../../cli/oswald-expressions.md)
+
+## Best Practices
+
+### Update Before Release
+
+It is strongly recommended to update external expressions before releasing a new version of the application. This ensures that:
+
+* The application includes the latest translations and corrections from Tasy
+* Any updates to domain values are reflected in the application
+* Users receive consistent messaging across the Tasy and Oswald platforms
+* Translation improvements made by the localization team are incorporated

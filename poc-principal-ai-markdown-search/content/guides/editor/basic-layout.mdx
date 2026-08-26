@@ -1,0 +1,225 @@
+---
+title: Basic Layout
+sidebar_label: Basic Layout
+---
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+This guide will show how a basic layout containing a title, content and footer can be created by using just the `Layout`, `Panel`, `Text` and `Footer` components.
+
+### How to use
+
+1. With the `Editor` open, create a new `fragment`, click on the `+` sign at the top left side of the editor.
+<figure>
+  ![Basic fragment with a layout](./../../../assets/guides/basic-layout/basic-layout-new-fragment.png)
+  <figcaption>Figure 1 - Basic fragment with a layout</figcaption>
+</figure>
+
+2. Select the `Layout` component in the side menu, `Components -> Layout -> Layout ` and drag it to the fragment.
+<figure>
+  ![Add new Layout](./../../../assets/guides/basic-layout/basic-layout-component-layout.gif)
+  <figcaption>Figure 2 - Add new Layout</figcaption>
+</figure>
+
+3. Select the `Tree` tab and select the `Layout` component.
+
+4. Select the `Properties` tab, you will be presented with all the properties that the `Layout` component contains, each component has its properties and they may vary depending on the component.
+
+5. Create 2 columns and 3 rows in the layout, by default the layout comes with 3 columns and 3 rows, it is possible to add or remove columns and rows. For this layout we will create a row with the name `header`, a row with two columns, `content-left` and `content-right`, and a row named `footer`.
+
+<figure>
+  ![Set layout names](./../../../assets/guides/basic-layout/basic-layout-component-layout-content.gif)
+  <figcaption>Figure 3 - Set layout names</figcaption>
+</figure>
+
+6. The properties will be defined as:  
+6.1 Rows  
+#0 = `200px` (header)  
+#1 = `auto` (content-left/content-right)  
+#3 = `min-content`  
+6.2 Columns
+#0 = `auto` (content-left)  
+#1 = `auto` (content-right)  
+<figure>
+  ![Define layout properties](./../../../assets/guides/basic-layout/basic-layout-properties.png)
+  <figcaption>Figure 4 - Define layout properties</figcaption>
+</figure>
+
+7. For each layout region we will add a `Panel` component. The `Panel` component is important, as it acts as a wrapper element, containing flex and alignment properties.
+It is common to use the `Panel` component to control content visibility dynamically.  
+To add a panel, in the same way as the layout, select the `Panel` component in the `Components` tab and drag it to each region of the layout.
+
+<figure>
+  ![Insert a panel into each layout region](./../../../assets/guides/basic-layout/basic-layout-component-layout-content-panel.gif)
+  <figcaption>Figure 5 - Insert a panel into each layout region</figcaption>
+</figure>
+
+8. The following structure is displayed in the `Tree` tab.
+<figure>
+  ![Tree example](./../../../assets/guides/basic-layout/basic-layout-tree.png)
+  <figcaption>Figure 6 - Tree example</figcaption>
+</figure>
+
+<Admonition type="note">
+It is a good practice to always define the `alias` property to reflect the name of each component, e.g. `panel-header`, `panel-content-left` and so on, because when there is a need to manipulate these components through a [`Controller`](./codegen.mdx), the component interaction will be more intuitive.
+</Admonition>
+
+9. Add a new component to the `panel-header`, in the `Components -> DataDisplay -> Text` tab and drag it to the `panel-header`, our `Tree` will look like this:
+<figure>
+  ![Insert an text component](./../../../assets/guides/basic-layout/basic-layout-tree-text-1.png)
+  <figcaption>Figure 7 - Insert an text component</figcaption>
+</figure>
+
+10. Select the `Text` component that we added in the previous step and click on the `Properties` tab, in the `value` property add the title for the page. 
+Change the properties of the `Text` component to:
+ - set the checkbox `bold`
+ - `size` = `xxlg`.
+ - `alias` = `text-header`
+<figure>
+  ![Tree example](./../../../assets/guides/basic-layout/basic-layout-tree-text-2.png)
+  <figcaption>Figure 8 - Tree example</figcaption>
+</figure>
+
+11. Center the title, in the `Tree` tab select the `panel-header` panel, in the `Properties` tab change the following properties:
+  - `alignItems` = `center`
+  - `justifyContent` = `center`
+
+12. Repeat the process of adding the `Text` component.
+  - Add `Text` to the `content-left` panel
+  - Add `Text` to the `content-left` panel
+
+13. Change the alias of each `Text` to:
+  - `alias` = `text-contet-left`
+  - `alias` = `text-contet-right`
+
+<figure>
+  ![Tree example](./../../../assets/guides/basic-layout/basic-layout-tree-text-3.png)
+  <figcaption>Figure 9 - Tree example</figcaption>
+</figure>
+
+14. Change the `value` property of each `Text` component, `content-left` and `content-right`. Take advantage of this moment to change other properties of the component to understand their behavior.  
+
+15. To finish, add a component to the footer, in the `Components -> Layout -> Footer` tab, drag the Footer component to the `panel-footer` panel.  
+
+<figure>
+  ![Add an footer component in the bottom panel](./../../../assets/guides/basic-layout/basic-layout-tree-footer.png)
+  <figcaption>Figure 10 - Add an footer component in the bottom panel</figcaption>
+</figure>
+
+  Layout will be as follows:
+
+  <figure>
+    ![Final layout example](./../../../assets/guides/basic-layout/basic-layout-final.png)
+  <figcaption>Figure 11 - Final layout example</figcaption>
+  </figure>
+
+
+16. To preview the result, select `editing, preview` in the Editor
+
+<figure>
+  ![Final layout preview](./../../../assets/guides/basic-layout/basic-layout-preview.png)
+  <figcaption>Figure 11 - Final layout preview</figcaption>
+</figure>
+
+<Details summary={<summary><code>basic-layout.osw</code></summary>}>
+
+```json 
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-basic",
+      "uuid": "1072bea3-20f3-4f6e-890f-c60de9ef22fb",
+      "columns": "auto auto",
+      "rows": "200px auto min-content",
+      "templateAreas": "\"header header\"\"content-left content-right\"\"footer footer\""
+    },
+    "children": [
+      {
+        "type": "Panel",
+        "props": {
+          "alias": "panel-header",
+          "uuid": "a717a5dc-850b-4e7a-af38-676ca0b2efb9",
+          "slot": "header",
+          "alignItems": "center",
+          "justifyContent": "center"
+        },
+        "children": [
+          {
+            "type": "Text",
+            "props": {
+              "alias": "text-header",
+              "uuid": "8a4f38e4-6a6d-4432-af11-f4fa5e0a09bf",
+              "size": "xxlg",
+              "value": "Lorem Ipsum",
+              "bold": true
+            }
+          }
+        ]
+      },
+      {
+        "type": "Panel",
+        "props": {
+          "alias": "panel-content-left",
+          "uuid": "deb15f17-8b3e-48b7-8419-c6fe600d6d49",
+          "slot": "content-left",
+          "margin": "5px",
+          "padding": "5px"
+        },
+        "children": [
+          {
+            "type": "Text",
+            "props": {
+              "alias": "text-content-left",
+              "uuid": "8bf081cf-ba01-4af6-950f-e0cbb8e77b36",
+              "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam quam eros, luctus ut condimentum quis, egestas at ante. Suspendisse lectus erat, molestie ullamcorper augue vitae, tincidunt tristique turpis. Aenean congue augue et urna elementum gravida. Vivamus mattis quam nibh, at pellentesque tortor porta et. Nulla aliquam dictum venenatis. Cras pharetra vel felis et auctor. Vivamus convallis tortor et neque tristique, eu ultrices dui convallis. Duis sit amet nibh ut velit sagittis pretium. Maecenas interdum, eros a porta hendrerit, sapien magna sollicitudin est, quis laoreet leo magna vel mi.  Donec congue est eget elit euismod, congue molestie nisi fermentum. Quisque fringilla dapibus augue ut mattis. Phasellus tincidunt odio et rhoncus volutpat. Aenean felis felis, dapibus lobortis risus iaculis, vulputate luctus neque. Etiam vehicula, ante eget malesuada convallis, risus ante lobortis turpis, id tempus dui velit quis ligula. Morbi vehicula rhoncus ipsum sed tempor. Duis et tortor a lectus egestas sagittis. Nam ante dolor, interdum sit amet dolor ut, molestie auctor lacus. Mauris neque nunc, tristique in aliquam sed, rutrum sed nisi. Mauris ut quam justo. Integer eget urna at nulla maximus molestie et at est. Morbi laoreet nec metus ut vulputate. Integer hendrerit faucibus risus. Duis enim quam, egestas at ornare eget, cursus non tellus. Morbi vel ultrices ipsum, id hendrerit augue. Cras cursus, nulla ut consectetur dignissim, nibh erat placerat ex, at dignissim odio erat eget velit.  Mauris feugiat quis orci iaculis iaculis. Ut tempus nunc non nibh dignissim efficitur. Nunc eget venenatis magna, scelerisque aliquam leo. Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse lectus erat, iaculis in nunc sed, fringilla faucibus nulla. Sed sit amet posuere justo. Integer auctor ligula in purus cursus fringilla. Pellentesque vulputate nisl a massa mollis pretium. Sed pulvinar quam quis sagittis pretium. Duis magna libero, venenatis eget felis sed, volutpat semper metus. Fusce et semper urna. Maecenas eu justo luctus, facilisis diam rhoncus, ullamcorper eros. Nam eu dictum lorem, sit amet dignissim lorem. Maecenas mollis tincidunt dictum. Nam vel elit finibus, elementum leo non, molestie mauris.  Vestibulum sollicitudin lacus lacus, tristique vehicula erat faucibus et. Integer facilisis nulla in tincidunt molestie. Integer vel odio enim. Nullam diam enim, laoreet quis turpis a, auctor maximus eros. Donec maximus tellus purus, maximus pretium metus commodo eu. Phasellus sed elit at quam porttitor pulvinar sed id mi. Nunc ac odio in velit eleifend scelerisque.  Vestibulum eros quam, vulputate suscipit sollicitudin eget, scelerisque at leo. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. In vitae faucibus nulla. Nulla venenatis ante in est mattis, eu maximus ex posuere. Donec volutpat, orci in porta vehicula, eros velit molestie justo, et elementum lectus dolor eu turpis. Curabitur condimentum dui eget lectus lobortis lobortis. Suspendisse laoreet porttitor lorem ut elementum."
+            }
+          }
+        ]
+      },
+      {
+        "type": "Panel",
+        "props": {
+          "alias": "panel-content-right",
+          "uuid": "5abe29b5-4780-4bce-929c-d0ee91daa216",
+          "slot": "content-right",
+          "alignItems": "",
+          "margin": "5px",
+          "padding": "5px"
+        },
+        "children": [
+          {
+            "type": "Text",
+            "props": {
+              "alias": "text-text-content-right",
+              "uuid": "1c1a60d9-be1f-48eb-a090-4d29affe822a",
+              "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec id ultrices tellus. Aenean porttitor leo id enim malesuada, elementum aliquet libero mattis. Nam enim neque, rhoncus nec neque pellentesque, mollis feugiat erat. Duis id justo urna. Nam vel leo eu elit porta finibus eget in ipsum. Cras blandit nibh vitae ante mattis sollicitudin. Pellentesque quis semper mauris, ut gravida tellus. Maecenas semper arcu libero, eu semper justo blandit luctus. Nulla at dui lacinia, elementum orci a, condimentum nibh. Mauris id tellus erat. Fusce dapibus lectus non odio aliquet, id gravida urna egestas. Pellentesque eu hendrerit sem. Etiam vulputate neque sed ligula blandit hendrerit. Fusce ultricies quis sapien eu efficitur.  Donec volutpat odio eu risus pulvinar malesuada. Nunc malesuada interdum porta. Pellentesque sagittis consequat turpis, nec aliquam felis dignissim id. Nam a lectus tincidunt, vulputate enim quis, viverra tortor. Donec a sapien iaculis, ullamcorper quam sed, tempus diam. Vivamus aliquet ultrices odio, eu porttitor lorem egestas sed. Praesent rhoncus ante at libero ultricies, eget tincidunt leo laoreet. Pellentesque pellentesque euismod magna vel venenatis. Fusce eleifend condimentum mauris at vulputate. In eu eros lacus. Cras convallis, massa id auctor molestie, mauris lorem elementum eros, eget porttitor sem tortor quis massa. Nullam euismod a dui vitae euismod. Cras vitae nisi id enim convallis condimentum eget vel tortor. Suspendisse nec viverra metus.  In malesuada commodo purus sit amet pharetra. Ut varius quis velit id euismod. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec vitae porta mauris, et aliquet leo. Nam id magna ut tellus vehicula finibus sed at neque. In nec porttitor nisl. Maecenas iaculis pulvinar neque sed mattis. Maecenas ultrices tortor justo, ut molestie sapien vulputate eu. Aliquam aliquet placerat dui, vitae malesuada nisl interdum vitae. Suspendisse iaculis massa velit, in molestie sem dapibus vitae.  Nullam ac tempus diam. Phasellus efficitur vel massa vitae fermentum. Donec volutpat pellentesque faucibus. Donec in libero vel lectus congue accumsan at a felis. Phasellus posuere libero nec aliquet viverra. Etiam hendrerit commodo nisl, tincidunt tincidunt dui congue a. In eget ullamcorper felis. Sed molestie dui lectus, vitae auctor nibh pulvinar nec. Quisque blandit luctus nisl non tincidunt. Nunc et convallis turpis, eu vulputate purus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed leo tellus, vulputate sit amet ante in, tincidunt ultrices eros.  Maecenas non faucibus nulla. In massa tellus, fringilla convallis accumsan ac, condimentum at ex. Fusce molestie quam eget posuere luctus. Sed tempus sapien dolor, at porta felis imperdiet in. Etiam lacinia ornare facilisis. Phasellus egestas non lacus quis interdum. Donec placerat nulla et mauris malesuada dignissim. Cras pretium varius dolor, et lobortis odio. Vivamus accumsan mauris placerat libero tincidunt, id maximus odio posuere. In pellentesque non ante id condimentum. Aenean vestibulum ultrices dolor, vitae pellentesque ligula consectetur quis. Quisque convallis orci nec sagittis eleifend. Donec tincidunt tellus dapibus orci blandit, a tempus erat vehicula.",
+              "formatters": {},
+              "@render": true
+            }
+          }
+        ]
+      },
+      {
+        "type": "Panel",
+        "props": {
+          "alias": "panel-content-footer",
+          "uuid": "dede906d-829f-4ac4-84b3-9a75da087c34",
+          "slot": "footer"
+        },
+        "children": [
+          {
+            "type": "Footer",
+            "props": {
+              "alias": "footer",
+              "uuid": "31a21bef-cb7f-4696-bdec-378f9ab2958e"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "name": "basic-layout"
+}
+```
+</Details>

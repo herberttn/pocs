@@ -1,0 +1,250 @@
+---
+title: Odin - Dependency Injection
+sidebar_label: 6. Odin
+sidebar_position: 6
+---
+
+import Admonition from '@theme/Admonition';
+
+[Odin](https://github.com/philips-software/odin) is a dependency injection library that Oswald uses to provide controller methods with access to component APIs and application contexts. While Odin is not a part of the Oswald framework itself, it is deeply integrated into how controllers interact with fragments.
+
+### What is Dependency Injection?
+
+**Dependency Injection (DI)** is a design pattern where objects receive their dependencies from external sources rather than creating them internally. This promotes:
+
+* **Loose coupling**: Controllers don't need to know how to create their dependencies
+* **Testability**: Dependencies can be easily mocked or replaced during testing
+* **Maintainability**: Changing how dependencies are provided doesn't require changing dependent code
+
+In Oswald, dependency injection allows developers to "inject" component APIs and contexts into controllers, making them available to any method without manual lookup or initialization.
+
+### How Oswald Uses Odin
+
+Oswald leverages Odin's **custom provider** feature to inject framework-specific resources:
+
+* **Component APIs**: Access to any component in the fragment by its alias
+* **Data Context**: Access to the fragment's data tree
+* **Submittable Fragment Context**: Access to submit/cancel methods for modal fragments
+
+When the `@Inject` decorator is used in a controller, Odin consults Oswald's custom providers to resolve the requested resource.
+
+### When to Use `@Inject`
+
+| Scenario | Use `@Inject` | Use `event.target` |
+|----------|---------------|--------------------|
+| Access component in its own event handler | ❌ Not needed | ✅ Preferred |
+| Access component from different event handler | ✅ Required | ❌ Not available |
+| Access component across multiple methods | ✅ Required | ❌ Not available |
+| Component needs to be available throughout lifecycle | ✅ Required | ❌ Not available |
+
+### Injecting Component APIs
+
+The `@Inject` decorator allows you to access component APIs anywhere in your controller, not just within event handlers for that specific component.
+
+**Syntax**:
+
+```tsx title="src/controllers/my-fragment-controller.ts"
+import { Inject } from '@odinjs/odin';
+
+import type { ButtonAPI, InputAPI } from '@philips-internal/oswald-ui-components';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { ClickEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @Inject(MyFragmentAliases.DELETE_BUTTON)
+  declare deleteButtonAPI: ButtonAPI;
+
+  @Inject(MyFragmentAliases.EMAIL_INPUT)
+  declare emailInputAPI: InputAPI;
+
+  @OnClick(MyFragmentAliases.SUBMIT_BUTTON)
+  onSubmitClick(event: ClickEvent): void {
+    const submitButtonAPI = event.target as ButtonAPI;
+
+    submitButtonAPI.setLoading(true);
+    this.deleteButtonAPI.setEnabled(false);
+
+    const email = this.emailInputAPI.getValue();
+
+    console.log('Email:', email);
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+**Declaration Syntax Explained**
+
+The `declare` keyword in TypeScript tells the compiler that a property exists and will be initialized externally. In this case, Odin handles the initialization at runtime:
+
+```tsx
+@Inject(MyFragmentAliases.DELETE_BUTTON)
+declare deleteButtonAPI: ButtonAPI;
+```
+
+* `@Inject(alias)`: Tells Odin to inject the component with this alias
+* `declare`: Tells TypeScript this property will be provided externally
+* `deleteButtonAPI`: The property name you'll use to access the API
+* `: ButtonAPI`: The TypeScript type for type safety and autocomplete
+
+
+<Admonition title="Important Considerations" type="warning">
+  **Runtime Error on Unmounted Components**: Attempting to access an injected component API when that component is not currently mounted will throw a runtime error. Always ensure the component exists in the current fragment state before accessing its API.
+
+  **Type Safety**: Always import and use the correct API type from `@philips-internal/oswald-ui-components` to get proper TypeScript checking and IDE autocomplete.
+</Admonition>
+
+### Injecting Contexts
+
+Besides component APIs, Oswald allows you to inject two special contexts that provide access to fragment-level data and functionality:
+
+* **Data Context**: Access to the fragment's data tree
+* **Submittable Fragment Context**: Access to submit/cancel methods for Modal-created fragments
+
+#### Data Context
+
+The `Data` context exists at the fragment level and holds application data in a hierarchical tree structure. The current fragment can access its own data and data from all parent fragments, enabling data sharing across the fragment hierarchy.
+
+##### Injecting Data Context
+
+```tsx title="src/controllers/data-context-example.ts"
+import { Inject } from '@odinjs/odin';
+
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import type { DataContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, MyFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+
+  @Inject(ContextType.DATA)
+  declare dataContext: DataContext;
+
+  @OnClick(MyFragmentAliases.BUTTON)
+  onButtonClick(): void {
+    this.dataContext.set({
+      userId: '12345',
+      userName: 'John Doe'
+    });
+
+    const userName = this.dataContext.get('userName');
+    console.log('User:', userName);
+  }
+}
+
+export {
+  MyFragmentController,
+};
+```
+
+Refer to the [Data Context](./../reference/contexts/data-context.mdx) page for more details.
+
+#### Submittable Fragment Context
+
+The `SubmittableFragment` context is a specialized context that exists **only** on fragments created by the `Modal` component. It provides methods to programmatically indicate that an action within the modal is complete, offering an alternative to using the modal's own button actions.
+
+##### Purpose
+
+This context allows developers to:
+
+* Submit a modal from custom logic within the fragment
+* Cancel a modal based on internal fragment events
+* Implement complex validation or workflow logic before modal completion
+
+##### Injecting Submittable Fragment Context
+
+```tsx title="src/controllers/modal-content-controller.ts"
+import { Inject } from '@odinjs/odin';
+
+import { Controller, OnClick } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ContextType } from '@philips-internal/oswald-ui-core';
+import type { SubmittableFragmentContext } from '@philips-internal/oswald-ui-core/lib/component/context/index.js';
+
+import { FragmentNames, ModelContentFragmentAliases } from '../codegen/index.ts';
+
+@Controller({ fragment: FragmentNames.MODAL_CONTENT })
+class ModalContentController {
+
+  @Inject(ContextType.SUBMITTABLE_FRAGMENT)
+  declare submittableFragmentContext: SubmittableFragmentContext;
+
+  @OnClick(ModelContentFragmentAliases.SAVE_BUTTON)
+  async onSaveButtonClick(): Promise<void> {
+    try {
+      await this.saveData();
+
+      this.submittableFragmentContext.submit();
+    } catch (error) {
+      console.error('Save failed:', error);
+    }
+  }
+
+  @OnClick(ModelContentFragmentAliases.CANCEL_BUTTON)
+  onCancelButtonClick(): void {
+    this.submittableFragmentContext.cancel();
+  }
+
+  private async saveData(): Promise<void> {
+    // Save logic here
+  }
+}
+
+export { ModalContentController };
+```
+
+##### When to Use
+
+Use the Submittable Fragment context when:
+
+* You need to perform validation before allowing modal submission
+* You have custom UI elements for submit/cancel instead of the modal's built-in buttons
+* You need to submit or cancel based on complex internal logic (e.g., after an async operation)
+
+Refer to the [Submittable Fragment Context](./../reference/contexts/submittable-fragment-context.mdx) page for more details.
+
+### Common Questions
+
+**Q: When should `@Inject` be used vs accessing via `event.target`?**  
+A: Use `event.target` when the API is needed only within that component's event handler. Use `@Inject` when the component's API needs to be accessed from multiple methods or from other components' event handlers.
+
+**Q: Can multiple components be injected in the same controller?**  
+A: Yes. As many component APIs as needed can be injected. Each `@Inject` decorator creates a separate injected property.
+
+**Q: What happens if an attempt is made to inject a component that doesn't exist in the fragment?**  
+A: Odin will throw a runtime error when the controller initializes, indicating that the requested resource couldn't be resolved. Ensure the alias matches a component in the fragment.
+
+**Q: Can component APIs be injected in the constructor?**  
+A: No. Injected properties are not available in the constructor. Use lifecycle methods like `@OnMount` to access injected components after they're initialized.
+
+**Q: Is it necessary to clean up injected components?**  
+A: No. Oswald automatically manages the lifecycle of injected component APIs through Proxies. When components unmount, the framework handles cleanup.
+
+**Q: Why should `declare` be used instead of initializing the property?**  
+A: The `declare` keyword tells TypeScript that the property will be initialized externally (by Odin's DI system). This provides type safety without requiring manual initialization.
+
+**Q: What is the difference between Data Context and component state?**  
+A: Data Context is fragment-level state that can be shared across the fragment hierarchy. Component state is internal to a specific component. Use Data Context for data that needs to be shared between fragments or components.
+
+**Q: Can a non-modal fragment use SubmittableFragmentContext?**  
+A: No. The SubmittableFragmentContext only exists for fragments created by the Modal component. Attempting to inject it in a regular fragment will cause a runtime error.
+
+**Q: Can a component be conditionally injected?**  
+A: No. The `@Inject` decorator is processed at class definition time, not runtime. All injections are unconditional. If a component might not exist, handle the runtime error or ensure it's always present in the fragment.
+
+**Q: What's the performance impact of using `@Inject`?**  
+A: Minimal. Odin's dependency resolution is efficient and happens once during controller initialization. Accessing injected properties is as fast as accessing regular class properties.
+
+## Related Resources
+
+* [Controllers](./controllers.mdx) - Learn about fragment controllers
+* [Data Context Reference](./../reference/contexts/data-context.mdx) - Context API details
+* [SubmittableFragment Context Reference](./../reference/contexts/submittable-fragment-context.mdx) - SubmittableFragment Context API details
+

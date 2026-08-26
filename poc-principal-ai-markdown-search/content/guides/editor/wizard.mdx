@@ -1,0 +1,327 @@
+---
+title: Wizard
+sidebar_label: Wizard
+---
+
+import Details from '@theme/Details';
+
+For scenarios where steps must be followed to achieve a result, Oswald provides the `Wizard` component, providing horizontal and vertical variants as well the possibility of grouping steps.
+
+### Requirements
+To start using the the component, a [basic layout](./basic-layout.mdx) is needed.  
+
+This guide will only use the `Layout` component, with the `Wizard` component as its child.
+
+<figure>
+ ![Wizard layout tree](./../../../assets/guides/wizard/wizard-basic-layout.png)
+ <figcaption>Figure 1 - Wizard layout tree</figcaption>
+</figure>
+
+### How to use
+
+   1. In the properties of the `Wizard` component, change the `mode` property to `horizontal`. This property defines how the Wizard will be presented on the screen, after finishing this guide, test the `vertical` mode to see the result.
+   2. Add 2 other components, `WizardStepGroup`, this component aims to group steps within the `Wizard`.
+     <figure>
+       ![Wizard group tree](./../../../assets/guides/wizard/wizard-group-tree.png)
+       <figcaption>Figure 3 - Wizard group tree</figcaption>
+     </figure>
+   3. Select the `WizardStepGroup` component and set a value in the `identifier` property, e.g. `wizard-group-one`.
+   4. Repeat the same process for the other `WizardStepGroup` defining another value for the `identifier` property, e.g. `wizard-group-two`.
+   <b>The `identifier` property is very important for the Wizard to define which step it is displaying, failure to define the identifier may cause an error when displayed.</b>
+   4. Add at least one `WizardStep` to each `WizardStepGroup`.
+     <figure>
+       ![Wizard steps tree](./../../../assets/guides/wizard/wizard-steps-tree.png)
+       <figcaption>Figure 4 - Wizard steps tree</figcaption>
+     </figure>
+   5. Define an `identifier` for each `WizardStep`.
+
+#### Adding a form
+
+For the steps functionality, a form will be added for the steps interaction. Remembering that you can work each step however you need, in the guide we will use a `Form` as it is a common use case for the Wizard.
+
+   1. Add the `Form` component in the `wizard-step-content`. 
+   <figure>
+     ![Adding form in step](./../../../assets/guides/wizard/wizard-form-one.png)
+     <figcaption>Figure 5 - Adding form to step</figcaption>
+   </figure>
+
+   2. Selecting the form component in the tree, change the following properties:
+     - `alias`: `form-step-one`.
+     - check the `editing` property.
+     - check the `disabled` property, this property is intended to display the form buttons, in this case we will not use it as a validation will be added to the onChange of each field, as soon as the form meets its full requirements the step will be validated and enable the `next step` button.
+
+   3. Add 2 fields inside the form component.
+
+   4. For each Field added, define its properties:
+
+     - `alias`: `field-one`, remembering that the alias must have a unique identifier for the fragment.
+     - `width`: `10`.
+     - `entry`: `field-one`.
+     - `label`: `Field One Label`.
+     - `validators`: `required`.
+
+   5. Add `Input` component to `Field` component.
+
+   6. Repeat steps 4 and 5 to add more fields within the form.
+
+### Creating the controller
+To interact with the component, a [controller](./codegen.mdx) is needed.
+After creating the fragment and saving it, right click on the fragment name in the `Metadata` tab, which will show some possible actions in regards to the fragment, click on the `Create Controller` one, which will create a basic controller file linked to the fragment.
+If necessary, use the [Codegen](./codegen.mdx) guide to check other code generation commands.
+<figure>
+   ![Creating the wizard controller](./../../../assets/guides/wizard/wizard-create-controller.png)
+   <figcaption>Figure 2 - Creating the wizard controller</figcaption>
+</figure>
+
+#### Adding events to the controller.
+For the wizard steps functionalities, it is necessary to add events to the controller so that the wizard knows when or not to enable the control buttons for the next step.
+
+  1. Select the `form` component in the `tree`.
+  2. In the `events` tab, right-click `onValidate` and click `Add event implementation`. This action will create a method in the controller that will be triggered every time the form's field is changed. At this point we will create logic to check whether the form is valid and whether or not we will enable the next step button.
+  <figure>
+   ![Creating event validate](./../../../assets/guides/wizard/wizard-add-event-validate.gif)
+   <figcaption>Figure 6 - Creating event validate</figcaption>
+</figure>
+  3. Right click the `Wizard` component in the `tree` and select `Create component @Inject`. This will create a reference to the component API to be used within the controller.
+
+After creating the method `handleFormStepOneValidate` you will need to add a validation rule.   
+Change the method to:
+```tsx
+   @OnValidate(WizardGuideAliases.FORM_STEP_ONE)
+   handleFormStepOneValidate(validateEvent: ValidateEvent): void {
+     this.mainWizard.setStepDone(this.mainWizard.getCurrentStepIdentifier(), validateEvent.valid);
+   }
+```
+
+The purpose of the `this.mainWizard.setStepDone()` method is to signal to the Wizard that the step has been completed, through which the step controls are enabled.
+The `setStepDone` method contains 2 attributes, the first is the identifier of which step is being defined, in this case we define the current step through the `this.mainWizard.getCurrentStepIdentifier()` method and the second attribute is a `boolean` that defines whether the step is done or not. By adding this method within the form's `OnValidate`, it is possible to get this information from the form itself, which indicates whether the form is valid or not through the `validateEvent.valid` attribute.
+
+For step 2 we will only create a `panel` with `text` and a `button`, with the aim of presenting some "term" for after step 1 has been completed.
+   1. Add the `panel`, `text` and `buttom` components in step 2.
+   <figure>
+     ![Step 2 tree](./../../../assets/guides/wizard/wizard-step-two-tree.png)
+     <figcaption>Figure 7 - Step 2 tree</figcaption>
+   </figure>
+
+   2. Select the `button` component and create a new `onClick` event.
+
+   3. In the method created, add the `setStepDone` logic so that the wizard understands that that step has been completed.
+   ```tsx
+       @OnClick(WizardGuideAliases.BUTTON_CONFIRM)
+       handleButtonConfirmClick(): void {
+         this.mainWizard.setStepDone(this.mainWizard.getCurrentStepIdentifier(), true);
+       }
+   ```
+
+#### Finishing the wizard component
+To complete the wizard component, add an `event` to the wizard.
+   1. Select the Wizard component.
+   2. On the Event tab, create a new event for `onSubmit`.
+   3. In the created method, add an `alert` to notify the wizard submission.
+   ```tsx
+     @OnSubmit(WizardGuideAliases.WIZARD)
+     handleWizardSubmit(): void {
+       alert('Wizard is done!');
+     }
+   ```
+
+   <figure>
+     ![Wizard example](./../../../assets/guides/wizard/wizard-example.gif)
+     <figcaption>Figure 8 - Wizard example</figcaption>
+   </figure>
+
+<Details summary={<summary>Wizard frament: <code>wizard-guide.osw</code></summary>}>
+```json
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-0",
+      "uuid": "c50eaf3c-6279-44fc-a2e5-825ea7c48d87",
+      "templateAreas": "\"content content content\"\"content content content\"\"content content content\""
+    },
+    "children": [
+      {
+        "type": "Wizard",
+        "props": {
+          "alias": "wizard",
+          "uuid": "3456834c-52ee-4727-a4b1-4695461300af",
+          "mode": "horizontal",
+          "slot": "content"
+        },
+        "children": [
+          {
+            "type": "WizardStepGroup",
+            "props": {
+              "alias": "wizard-step-group-0",
+              "uuid": "b5329bad-5747-49a7-be00-b640ec757e17",
+              "identifier": "wizard-group-one",
+              "title": "Group One"
+            },
+            "children": [
+              {
+                "type": "WizardStep",
+                "props": {
+                  "alias": "wizard-step-one",
+                  "uuid": "9ab3fd65-67bd-44a7-8114-d2d811dd4cb6",
+                  "identifier": "step-one",
+                  "title": "Step One"
+                },
+                "children": [
+                  {
+                    "type": "Form",
+                    "props": {
+                      "alias": "form-step-one",
+                      "uuid": "de7c01cc-1325-4a24-94ca-514047c90061",
+                      "disabled": true,
+                      "editing": true,
+                      "slot": "wizard-step-content"
+                    },
+                    "children": [
+                      {
+                        "type": "Field",
+                        "props": {
+                          "alias": "field-one",
+                          "uuid": "1b0a686e-4650-4fff-a90c-a44937db6ca5",
+                          "label": "Field One Label",
+                          "validators": [
+                            {
+                              "name": "required",
+                              "options": {}
+                            }
+                          ],
+                          "width": 10,
+                          "entry": "field-one"
+                        },
+                        "children": [
+                          {
+                            "type": "Input",
+                            "props": {
+                              "alias": "input-one",
+                              "uuid": "373180b1-14f0-471b-87f6-b39e233b71ca"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Field",
+                        "props": {
+                          "alias": "field-two",
+                          "uuid": "3bb056ee-e917-4fe0-82e9-a6d4bb533b8f",
+                          "label": "Field Two",
+                          "validators": [
+                            {
+                              "name": "required",
+                              "options": {}
+                            }
+                          ],
+                          "width": 10,
+                          "entry": "field-two"
+                        },
+                        "children": [
+                          {
+                            "type": "Input",
+                            "props": {
+                              "alias": "input-two",
+                              "uuid": "1b48c1ba-7b7c-4229-9e24-b11e8e6272b9"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "WizardStepGroup",
+            "props": {
+              "alias": "wizard-step-group-1",
+              "uuid": "27b14991-4459-4b47-9ad1-75898e6e1d35",
+              "identifier": "wizard-group-two",
+              "title": "Group Two"
+            },
+            "children": [
+              {
+                "type": "WizardStep",
+                "props": {
+                  "alias": "wizard-step-two",
+                  "uuid": "70225853-493d-404a-936a-e22c1fa2e1b7",
+                  "identifier": "step-two",
+                  "title": "Step Two"
+                },
+                "children": [
+                  {
+                    "type": "Panel",
+                    "props": {
+                      "alias": "panel-0",
+                      "uuid": "4a9876d2-cd45-4669-b03f-23837722bcb6",
+                      "slot": "wizard-step-content",
+                      "height": "300"
+                    },
+                    "children": [
+                      {
+                        "type": "Text",
+                        "props": {
+                          "alias": "text-0",
+                          "uuid": "9a0c2608-9ac7-4941-b40c-e1426f24826e",
+                          "value": "Maecenas blandit sit amet nunc vitae tempus. Nulla facilisi. Sed sit amet faucibus arcu. In ultrices metus turpis, nec tincidunt urna laoreet ac. Suspendisse eu condimentum elit. Etiam imperdiet purus faucibus tortor ullamcorper, in mattis quam tincidunt. Duis eget dolor dolor. Curabitur et nisl vulputate, viverra dui in, pellentesque ante. Mauris nulla lorem, maximus vel libero eget, faucibus varius leo. Praesent pellentesque, risus et cursus imperdiet, nunc justo vestibulum orci, et finibus augue dui vel eros. Duis sit amet ipsum quis massa blandit volutpat nec ut dolor. Donec mollis est ut vehicula gravida. In id nulla quam."
+                        }
+                      },
+                      {
+                        "type": "Button",
+                        "props": {
+                          "alias": "button-confirm",
+                          "uuid": "28d3367e-bad6-4be3-86b7-1ad754ce36a0",
+                          "value": "Confirm"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "wizard-guide"
+}
+```
+</Details>
+
+<Details summary={<summary>Wizard controller: <code>wizard-guide-controller.ts</code></summary>}>
+```tsx
+import { Inject } from '@odinjs/odin';
+
+import { WizardAPI } from '@philips-internal/oswald-ui-components';
+import Controller, { OnClick, OnSubmit, OnValidate } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { ValidateEvent } from '@philips-internal/oswald-ui-core/lib/component/types/validatable.js';
+
+import { FragmentNames, WizardGuideAliases } from '../../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.WIZARD_GUIDE })
+class WizardGuideController {
+  @Inject(WizardGuideAliases.WIZARD)
+  declare mainWizard: WizardAPI;
+
+  @OnValidate(WizardGuideAliases.FORM_STEP_ONE)
+  handleFormStepOneValidate(validateEvent: ValidateEvent): void {
+    this.mainWizard.setStepDone(this.mainWizard.getCurrentStepIdentifier(), validateEvent.valid);
+  }
+
+  @OnClick(WizardGuideAliases.BUTTON_CONFIRM)
+  handleButtonConfirmClick(): void {
+    this.mainWizard.setStepDone(this.mainWizard.getCurrentStepIdentifier(), true);
+  }
+
+  @OnSubmit(WizardGuideAliases.WIZARD)
+  handleWizardSubmit(): void {
+    alert('Wizard is done!');
+  }
+}
+export default WizardGuideController;
+```
+</Details>

@@ -1,0 +1,143 @@
+---
+title: Context Menu
+sidebar_label: Context Menu
+---
+
+import Details from '@theme/Details';
+import Admonition from '@theme/Admonition';
+
+For scenarios where menu options are necessary, Oswald provides the `ContextMenu` component.
+
+### Requirements
+This guide assumes previous knowledge of how to [create a basic layout](./basic-layout.mdx).
+
+To start our `ContextMenu` a fragment with the component `Layout` will be used.  
+
+<figure>
+  ![Initial Tree](./../../../assets/guides/context-menu/context-menu-initial-tree.png)
+  <figcaption>Figure 1 - Initial Tree</figcaption>
+</figure>
+
+<Admonition type="note">
+To add the events for the options, you can check the [Codegen](./codegen.mdx) guide for creating the controller.
+</Admonition>
+
+### How to use
+
+   1. In the components tab, search for `ContextualBar` and drag it into the `Layout`.
+  <figure>
+  ![Create a ContextualBar](./../../../assets/guides/context-menu/context-menu-contextualbar.gif)
+  <figcaption>Figure 2 - Create a ContextualBar</figcaption>
+  </figure>
+
+  2. Select the `Properties` tab, you will be presented with all the properties that the `ContextualBar` component contains, change the property `alias` to `main-contextual-bar` and the `title` for `Context menu`.
+
+  3. Now in the `ContextualBar` > `content` area, include a new `ContextMenu` component.
+  <figure>
+  ![Create a ContextMenu](./../../../assets/guides/context-menu/create-context-menu.gif)
+  <figcaption>Figure 3 - Create a ContextMenu</figcaption>
+  </figure>
+
+ 4. Click on the `ContextMenu` to open it, and add 2 `Option` components. Change the `value` property to `First Option` and `Second Option` respectively.
+  <figure>
+  ![ContextMenu Option](./../../../assets/guides/context-menu/context-menu-options.gif)
+  <figcaption>Figure 4 - ContextMenu Option</figcaption>
+  </figure>
+
+ 5. Change the `alias` property to `first-option` and `second-option` according to each component. The following structure is displayed in the Tree tab.
+  <figure>
+  ![ContextMenu Option Tree](./../../../assets/guides/context-menu/context-menu-options-tree.png)
+  <figcaption>Figure 5 - ContextMenu Option Tree</figcaption>
+  </figure>
+
+ 6. Select the `second-option` component and on tab `Properties` check the option `hasSuboptions`.
+  <figure>
+  ![ContextMenu Suboptions](./../../../assets/guides/context-menu/context-menu-suboptions.gif)
+  <figcaption>Figure 6 - ContextMenu Suboptions</figcaption>
+  </figure>
+
+ 7. Include a new `Option` component inside the `second-option`. Change the `alias` property to `third-option` as well as the `value` property.
+  <figure>
+  ![ContextMenu Third Option](./../../../assets/guides/context-menu/context-menu-third-option.gif)
+  <figcaption>Figure 7 - ContextMenu Third Option</figcaption>
+  </figure>
+
+ 8. To preview the result, select `Toggles mode between: editing, previewing` in the Editor.
+  <figure>
+  ![ContextMenu Preview](./../../../assets/guides/context-menu/context-menu-preview.png)
+  <figcaption>Figure 8 - ContextMenu Preview</figcaption>
+  </figure>
+
+ 9. ContextMenu will be shown as follow:
+  <figure>
+  ![ContextMenu Final Preview](./../../../assets/guides/context-menu/context-menu-final-preview.gif)
+  <figcaption>Figure 9 - ContextMenu Final Preview</figcaption>
+  </figure>
+
+<Details summary={<summary><code>contextmenu.osw</code></summary>}>
+```json  
+{
+  "metadata": {
+    "type": "Layout",
+    "props": {
+      "alias": "layout-context-menu",
+      "uuid": "0add62e3-74a6-48c1-a239-7be66f2e39e6",
+      "columns": "auto",
+      "rows": "auto",
+      "templateAreas": "\"content\""
+    },
+    "children": [
+      {
+        "type": "ContextualBar",
+        "props": {
+          "alias": "main-contextual-bar",
+          "uuid": "e5c77e43-a443-4ee2-9fd5-1f610b9499a3",
+          "slot": "content",
+          "title": "Context Menu"
+        },
+        "children": [
+          {
+            "type": "ContextMenu",
+            "props": {
+              "alias": "main-context-menu",
+              "uuid": "83e033fe-d827-432a-bd05-5b9e5c212656",
+              "slot": "content"
+            },
+            "children": [
+              {
+                "type": "Option",
+                "props": {
+                  "alias": "first-option",
+                  "uuid": "1d3538d7-3fd7-44d8-880d-0a56095b933b",
+                  "value": "First Option"
+                }
+              },
+              {
+                "type": "Option",
+                "props": {
+                  "alias": "second-option",
+                  "uuid": "b0bbe315-4e21-4971-8b35-c8d703e1b1ae",
+                  "hasSuboptions": true,
+                  "value": "Second Option"
+                },
+                "children": [
+                  {
+                    "type": "Option",
+                    "props": {
+                      "alias": "third-option",
+                      "uuid": "e2cc17d3-8459-4cc1-99d0-14a40f836fcd",
+                      "value": "Third Option"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "name": "contextmenu"
+}
+```
+</Details>

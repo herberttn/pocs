@@ -1,0 +1,66 @@
+---
+title: Routes
+sidebar_label: Routes
+---
+
+import Admonition from '@theme/Admonition';
+
+This guide shows how to manage applications routes through Oswald's Route Manager, controlling the entire application routing definition.
+
+### Requirements
+This guide assumes previous knowledge on how to [create fragments](./basic-layout.mdx), their contents are shown when navigating to a route.
+In this guide, a layout with a panel and a `Hello World` text was defined.
+
+<figure>
+   ![Layout configuration](./../../../assets/guides/routes/routes-initial-layout.png)
+   <figcaption>Figure 1 - Layout configuration</figcaption>
+</figure>
+
+### Using route management
+
+Start by opening the `Route Manager` which is responsible for managing the application's routes.
+<figure>
+   ![Open the route manager](./../../../assets/guides/routes/routes-open-router-manager.png)
+   <figcaption>Figure 2 - Open the route manager</figcaption>
+</figure>
+
+Within the Route Manager screen, all defined application routes are shown, as well as their child routes, as exemplified by the `/application` route.
+
+<figure>
+   ![Route Manager](./../../../assets/guides/routes/routes-route-manager.png)
+   <figcaption>Figure 3 - Route Manager</figcaption>
+</figure>
+
+In this guide we will define the route of the fragment within the `/application` route that will be available after logging in.
+1. Click on the Application route, it will display all child routes.
+2. Click on the `New` button to create a new route.
+3. Set a name for the route.
+4. Set the path to route.
+5. Select the created fragment, in this case the `guide-routes` fragment.
+
+<figure>
+   ![Create a new route](./../../../assets/guides/routes/routes-new-route.png)
+   <figcaption>Figure 4 - Create a new route</figcaption>
+</figure>
+
+
+<Admonition type="note">
+To access the route, it's necessary create a respective module through [Oswald's Module Manager](./modules.mdx).
+</Admonition>
+
+### Accessing the created route
+
+The editor has the option to open a real-time preview of the application, without the need to start a new process through the terminal or command prompt. This can be done through the `Real-time application preview` action.
+
+<figure>
+   ![Start application preview](./../../../assets/guides/routes/routes-application-preview.png)
+   <figcaption>Figure 4 - Start application preview</figcaption>
+</figure>
+
+A new browser window or tab will be open, starting the process of previewing the application, the process may take some time as the application gets bootstraped.
+After login in the application, manually navigating to the created route path will show the fragment registered within the Route Manger.
+
+<figure>
+   ![Accessing the route](./../../../assets/guides/routes/routes-acces-route.gif)
+   <figcaption>Figure 5 - Accessing the route</figcaption>
+</figure>

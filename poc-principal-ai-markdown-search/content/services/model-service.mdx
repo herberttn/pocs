@@ -1,0 +1,501 @@
+---
+sidebar_label: ModelService
+---
+
+import Admonition from '@theme/Admonition';
+import Details from '@theme/Details';
+
+# `ModelService`
+
+The `ModelService` provides developers with data formatting, parsing, and validation capabilities for application data. It manages a catalog of formatters and validators that can be used to transform and validate user input, ensuring data consistency throughout the application.
+
+The service operates through three main concepts:
+
+- **Formatters**: Transform raw data into formatted strings for display (e.g., `12345678` → `12345-678` for postal codes) and parse them back. Each formatter includes its own validation logic.
+- **Validators**: Validate data without formatting it (e.g., checking if a value is required or meets length constraints).
+- **ValidationRunner**: A API for chaining multiple validators together and executing them on a value.
+
+<Admonition type="info">
+The `ModelService` is available globally and does not require initialization.
+</Admonition>
+
+## Built-in Formatters and Validators
+
+The framework provides several built-in formatters and validators in the `@philips-internal/oswald-ui-model` package:
+
+**Available Formatters:**
+- `date` - Date formatting with locale support
+- `digit` - Numeric digits only
+- `currency` - Currency formatting
+- `float` - Floating point numbers
+- `integer` - Integer numbers with optional thousands separator
+- `cnpj` - Brazilian CNPJ formatting
+- `numeric` - General numeric formatting
+- `person-id` - Person ID/CPF formatting
+- `postal-code` - Brazilian postal code (CEP) formatting
+
+**Available Validators:**
+- `required` - Validates that a value is defined and not empty
+- `min-length` / `max-length` - String length validation
+- `min-value` / `max-value` - Numeric value range validation
+- `min-digits` / `max-digits` - Number of digits validation
+- `min-alphas` / `max-alphas` - Number of alphabetic characters validation
+- `length-between` - String length range validation
+- `interval-threshold` - Numeric interval validation
+- `not-contains` - Validates that value doesn't contain specific strings
+- `phone-number` - Phone number validation
+- `required-entries` - Validates required object entries
+- `required-files` - Validates required file uploads
+- `unique` - Validates uniqueness in arrays
+
+## Methods
+
+### `registerFormatter`
+
+Registers a formatter into the formatters catalog. A formatter provides formatting, parsing, and validation capabilities for a specific data type.
+
+**Parameters:**
+- `name` (string): Unique identifier for the formatter
+- `formatter` (Formatter): Object with `format`, `getPattern`, `parse`, and `validate` methods
+
+**Returns:** The registered formatter
+
+**Throws:** Error if a formatter with the same name already exists
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import type { Formatter } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const uppercaseFormatter: Formatter<string> = {
+  format: (value: string) => value.toUpperCase(),
+  getPattern: () => /^[A-Z]+$/,
+  parse: (value: string) => value.toLowerCase(),
+  validate: async (value: string) => [{
+    message: 'Value must contain only uppercase letters',
+    name: 'uppercase',
+    valid: /^[A-Z]+$/.test(value),
+  }],
+};
+
+ModelService.registerFormatter('uppercase', uppercaseFormatter);
+```
+</Details>
+
+<Admonition type="warning">
+Attempting to register a formatter with a name that already exists will throw an error.
+</Admonition>
+
+<Admonition type="tip">
+Learn more about [creating custom formatters](/guides/creating-formatter).
+</Admonition>
+
+### `registerValidator`
+
+Registers a validator into the validators catalog. Validators are used to validate data without formatting it.
+
+**Parameters:**
+- `name` (string): Unique identifier for the validator
+- `validator` (ValidatorFunction): Async function that returns an array of Validation objects
+
+**Returns:** The registered validator
+
+**Throws:** Error if a validator with the same name already exists
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import type { ValidatorFunction, Validation } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const positiveNumberValidator: ValidatorFunction<number> = async (value: number) => {
+  const valid = value > 0;
+
+  return [{
+    message: valid ? '' : 'Value must be a positive number',
+    name: 'positive-number',
+    valid,
+  }];
+};
+
+ModelService.registerValidator('positive-number', positiveNumberValidator);
+```
+</Details>
+
+<Admonition type="warning">
+Attempting to register a validator with a name that already exists will throw an error.
+</Admonition>
+
+<Admonition type="tip">
+Learn more about [creating custom validators](/guides/creating-validator).
+</Admonition>
+
+### `getFormatter`
+
+Gets a formatter based on the name provided. Returns a default formatter if the name is not found.
+
+**Parameters:**
+- `name` (string): The formatter name to retrieve
+
+**Returns:** Formatter object with format, parse, getPattern, and validate methods
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const postalCodeFormatter = ModelService.getFormatter('postal-code');
+    console.log('Formatter:', postalCodeFormatter);
+  }
+}
+```
+</Details>
+
+### `getValidator`
+
+Gets a validator or formatter validator based on the name provided. If the name matches a formatter, it returns the formatter's validation function.
+
+**Parameters:**
+- `name` (string): The validator or formatter name
+
+**Returns:** ValidatorFunction that returns a Promise of Validation array
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  async onLayoutMount(): Promise<void> {
+    const validator = ModelService.getValidator('required');
+    const results = await validator('some value');
+    console.log('Validation results:', results);
+  }
+}
+```
+</Details>
+
+### `getFormatters`
+
+Gets all formatter names within the catalog.
+
+**Returns:** Array of strings containing all registered formatter names
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const formatters = ModelService.getFormatters();
+    console.log('Available formatters:', formatters);
+  }
+}
+```
+</Details>
+
+### `getValidators`
+
+Gets all validator names within the catalog. Can optionally exclude formatters to return only pure validators.
+
+**Parameters:**
+- `exclusive` (boolean, optional): If `true`, returns only pure validators (excludes formatters). Default: `false`
+
+**Returns:** Array of strings containing validator names
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    // Get all validators (including formatters)
+    const allValidators = ModelService.getValidators();
+
+    // Get only pure validators (excluding formatters)
+    const pureValidators = ModelService.getValidators(true);
+
+    console.log('All validators:', allValidators);
+    console.log('Pure validators:', pureValidators);
+  }
+}
+```
+</Details>
+
+### `getFormatterPattern`
+
+Gets the formatting pattern of a formatter. Returns the pattern as a string representation.
+
+**Parameters:**
+- `name` (string): The formatter name
+
+**Returns:** String representation of the formatter's pattern (RegExp converted to string)
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const pattern = ModelService.getFormatterPattern('digit');
+    console.log('Digit pattern:', pattern);
+  }
+}
+```
+</Details>
+
+### `format`
+
+Formats a value based on the formatter name provided. Optionally accepts configuration options for the formatter.
+
+**Parameters:**
+- `name` (string): The formatter name
+- `value` (T): The value to be formatted
+- `options` (object, optional): Formatter-specific configuration options
+
+**Returns:** Formatted string representation of the value
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const formatted = ModelService.format('postal-code', '12345678');
+    console.log('Formatted postal code:', formatted); // 12345-678
+
+    // With options
+    const formattedWithOptions = ModelService.format('integer', 1234567, {
+      thousandsSeparator: ',',
+    });
+    console.log('Formatted integer:', formattedWithOptions); // 1,234,567
+  }
+}
+```
+</Details>
+
+### `formatProps`
+
+Formats each entry of an object based on the keys and formatters provided. This is useful for formatting multiple properties at once.
+
+**Parameters:**
+- `props` (object): The object containing values to be formatted
+- `keys` (array): Array of property keys to format
+- `formatters` (object, optional): Map of keys to formatter configurations `{ name: string, options?: object }`
+
+**Returns:** Object containing only the specified keys with formatted values
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const userData = {
+      name: 'John Doe',
+      zipCode: '12345678',
+      phone: '11987654321',
+      age: 25,
+    };
+
+    const formatted = ModelService.formatProps(
+      userData,
+      ['zipCode', 'phone'],
+      {
+        zipCode: { name: 'postal-code' },
+        phone: { name: 'digit' },
+      }
+    );
+
+    console.log('Formatted props:', formatted);
+  }
+}
+```
+</Details>
+
+### `parse`
+
+Removes the formatting from a formatted value. This is the inverse operation of `format`.
+
+**Parameters:**
+- `format` (string): The formatter name
+- `value` (string): The formatted value to parse
+- `options` (object, optional): Formatter-specific configuration options
+
+**Returns:** Parsed value in its original type (T)
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  onLayoutMount(): void {
+    const parsed = ModelService.parse<string>('postal-code', '12345-678');
+    console.log('Parsed postal code:', parsed); // 12345678
+
+    // With options
+    const parsedWithOptions = ModelService.parse<number>('integer', '1,234,567', {
+      thousandsSeparator: ',',
+    });
+    console.log('Parsed integer:', parsedWithOptions); // 1234567
+  }
+}
+```
+</Details>
+
+### `validate`
+
+Creates a `ValidationRunner` for the value provided. The `ValidationRunner` allows chaining multiple validators and formatters for comprehensive validation.
+
+**Parameters:**
+- `value` (T): The value to be validated
+
+**Returns:** ValidationRunner instance with `apply(name, options?)` and `run()` methods
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+@Controller({ fragment: FragmentNames.MY_FRAGMENT })
+class MyFragmentController {
+  @OnMount(MyFragmentAliases.ALIAS)
+  async onLayoutMount(): Promise<void> {
+    // Single validator
+    const result = await ModelService.validate('12345')
+      .apply('digit')
+      .run();
+
+    console.log('Validation result:', result);
+
+    // Multiple validators
+    const complexResult = await ModelService.validate('password123')
+      .apply('required')
+      .apply('min-length', { min: 8 })
+      .run();
+
+    console.log('Complex validation result:', complexResult);
+
+    // With options
+    const resultWithOptions = await ModelService.validate('short')
+      .apply('min-length', { min: 10 })
+      .apply('max-length', { max: 50 })
+      .run();
+
+    console.log('Validation with options:', resultWithOptions);
+  }
+}
+```
+</Details>
+
+<Admonition type="tip">
+The `ValidationRunner` provides a fluent API for building validation chains. Use the `apply` method to add validators (with optional configuration) and the `run` method to execute the validation.
+</Admonition>
+
+<Admonition type="caution">
+If a validation takes more than 500ms to complete, it will be timed out and return a validation error.
+</Admonition>
+
+## Validator Types
+
+Validators can return different types to indicate the severity of validation issues:
+
+- **`ValidatorType.DEFAULT`**: Standard validation errors that prevent form submission (blocks user action)
+- **`ValidatorType.WARNING`**: Non-blocking warnings that inform users but allow form submission (does not block user action)
+
+### Validation Result Structure
+
+Each validation returns a `Validation` object with the following structure:
+
+```typescript
+interface Validation {
+  name: string;           // Validator identifier
+  valid: boolean;         // Whether validation passed
+  message: string;        // Error/warning message (empty string if valid)
+  type?: ValidatorType;   // 'default' or 'warning' (optional, defaults to 'default')
+}
+```
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import { ModelService, ValidatorType } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+import type { ValidatorFunction } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const passwordStrengthValidator: ValidatorFunction<string> = async (value: string) => {
+  const hasUpperCase = /[A-Z]/.test(value);
+  const hasNumber = /[0-9]/.test(value);
+
+  if (value.length < 8) {
+    return [{
+      message: 'Password must be at least 8 characters',
+      name: 'password-length',
+      type: ValidatorType.DEFAULT,
+      valid: false,
+    }];
+  }
+
+  if (!hasUpperCase || !hasNumber) {
+    return [{
+      message: 'Password should contain uppercase letters and numbers for better security',
+      name: 'password-strength',
+      type: ValidatorType.WARNING,
+      valid: true,
+    }];
+  }
+
+  return [{
+    message: '',
+    name: 'password-strength',
+    valid: true,
+  }];
+};
+
+ModelService.registerValidator('passwordStrength', passwordStrengthValidator);
+```
+</Details>
+
+## Best Practices
+
+- **Register formatters and validators early**: Register your custom formatters and validators during application initialization to ensure they're available when needed.
+- **Use formatters for display**: Always format values for display purposes and parse them back for storage or processing.
+- **Chain validators**: Use the `ValidationRunner` to chain multiple validators for comprehensive data validation.
+- **Provide clear error messages**: Ensure validation messages are user-friendly and actionable.
+- **Reuse formatters**: Create reusable formatters for common data types across your application.
+
+## Common Patterns
+
+### Chaining Multiple Validators
+
+```typescript
+import { ModelService } from '@philips-internal/oswald-ui-core/lib/services/index.js';
+
+const result = await ModelService.validate(userInput)
+  .apply('required')
+  .apply('min-length', { min: 8 })
+  .apply('max-length', { max: 50 })
+  .apply('custom-validator', { customOption: true })
+  .run();
+
+// Check if all validations passed
+const isValid = result.every(v => v.valid);
+```
+
+## Related Resources
+
+- [Creating Custom Formatters](/guides/creating-formatter) - Detailed guide on creating formatters
+- [Creating Custom Validators](/guides/creating-validator) - Detailed guide on creating validators
+- [MessageService](/services/message-service) - For internationalized validation messages

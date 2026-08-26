@@ -1,0 +1,98 @@
+import Admonition from '@theme/Admonition';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# GitHub packages authentication
+
+Oswald's packages are now available on GitHub Packages under the `@philips-internal` organization and do not require any VPN connection to be installed. However, GitHub Packages requires authentication. Below are instructions on how to set up authentication to install any package from GitHub Packages under the `@philips-internal` organization.
+
+## Creating a personal access token
+If you do not already have one, use the link below to create it. Your token needs to have the `read:packages` scope/permission. If your existing token doesn't have this scope/permission you'll have to add it (you will need to authorize access to the organization again after this).
+
+> See documentation: [Creating a personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+
+To get Oswald, the necessary scopes are `repo`, `user` and `read:packages`:
+<figure>
+  ![Generate new token](./../../assets/github-packages-authentication/token-scopes.png)
+  <figcaption>Figure 1 - Options</figcaption>
+</figure>
+
+## Authorizing your personal access token
+Your token needs to have authorization to access the `@philips-internal` organization on GitHub.  
+Use the link below to authorize it.
+
+> See documentation: [Authorizing a personal access token for use with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/authorizing-a-personal-access-token-for-use-with-saml-single-sign-on)
+
+## Using you personal access token
+Create an environment variable named `GITHUB_TOKEN` and with your token as its value. The value of this environment variable will be used to authenticate to the GitHub Packages registry and download the necessary dependencies.
+
+<Tabs>
+  <TabItem value="bash" label="bash">
+    ```bash
+    export GITHUB_TOKEN=token
+    ```
+  </TabItem>
+  <TabItem value="powershell" label="powershell">
+    ```powershell
+    set GITHUB_TOKEN=token
+    ```
+  </TabItem>
+</Tabs>
+
+## Configuring `npm` authentication on your project
+Create or edit your `.npmrc` file as follows:
+### **Add to `.npmrc`**
+
+```ini title=".npmrc"
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+//npm.pkg.github.com:_authToken=${GITHUB_TOKEN}
+
+@philips-internal:registry=https://npm.pkg.github.com
+```
+
+### **Remove from `.npmrc`**
+In a previous version, Oswald moved to [`@odinjs/odin`](https://www.npmjs.com/package/@odinjs/odin)'s open source version (instead of the internal version).
+```ini title=".npmrc"
+# diff-remove-next-line
+@philips:registry=http://192.168.240.10:4873
+```
+
+<Admonition type="caution">
+  Pay attention to the scope `@philips`, not `@philips-emr` or `@philips-internal`
+</Admonition>
+
+## Configuring `npm` authentication to run standalone commands
+To run standalone commands from private packages in an empty directory (such as with `npx`), you'll need to follow these steps:
+
+1. **Login**
+    ```shell
+    npm login \
+      --scope @philips-internal \
+      --auth-type legacy \
+      --registry https://npm.pkg.github.com
+    ```
+    > Upon running the command above, the cli will ask for your username and password.\
+    > **Always** use a [personal access token](#creating-a-personal-access-token) as your password, so you can revoke it if necessary.
+2. **Run your command**
+    ```shell
+    # insert command here
+    ```
+3. **Logout**
+    ```shell
+    npm logout
+    ```
+
+<Admonition type="danger">
+  **DO NOT** forget to logout.\
+  **ALWAYS** use a [personal access token](#creating-a-personal-access-token) as your password, so you can revoke it if necessary.
+</Admonition>
+
+## Further reading
+- by GitHub
+  - [About organizations](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations)
+  - [About scopes and permissions for package registries](https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages#about-scopes-and-permissions-for-package-registries)
+  - [Installing a package](https://docs.github.com/en/packages/learn-github-packages/installing-a-package)
+  - [Working with the npm registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry)
+- by npm
+  - [npm scopes](https://docs.npmjs.com/cli/v8/using-npm/scope)
+  - [npmrc](https://docs.npmjs.com/cli/v8/configuring-npm/npmrc)

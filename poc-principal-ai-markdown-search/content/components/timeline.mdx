@@ -1,0 +1,158 @@
+---
+sidebar_label: Timeline
+---
+
+import Details from '@theme/Details';
+
+# `Timeline`
+
+The Timeline component is a versatile visualization tool designed to display and manage chronological events. It features a responsive design that adapts between desktop and mobile views while maintaining consistent data representation and user interaction capabilities.
+
+### Display System
+
+The component implements a dual-view system that responds to the user's device. On desktop environments, it presents a horizontal timeline with a detailed time-axis curtain, displaying hourly intervals across the day. The desktop view includes a visual grid for precise time reference, where events are plotted directly on the timeline for spatial understanding.
+
+When viewed on mobile devices, the interface transforms into a vertical list that groups events by time slots, maintaining chronological order while optimizing for smaller screens.
+
+### Customization
+
+The component is content-agnostic, enabling developers to define event content according to their needs through custom rendering capabilities for both headers and cards. This flexibility is supported by a data structure that accommodates various use cases.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+import React, { ReactElement } from 'react';
+
+import { Inject } from '@odinjs/odin';
+
+import { CardContainer, CardContainerBody, CardContainerZone, Panel, Text, TextFontSize, TextType } from '@philips-internal/oswald-ui-components';
+import type {  TimelineAPI, TimelineEvent } from '@philips-internal/oswald-ui-components';
+import { LayoutAlign, LayoutFlexDirection, LayoutJustify } from '@philips-internal/oswald-ui-constants';
+import { Controller, OnDynamicContentRender } from '@philips-internal/oswald-ui-core/lib/client/index.js';
+import { RenderEvent } from '@philips-internal/oswald-ui-core/lib/component/types/index.js';
+
+import './timeline-controller.css';
+import { FragmentNames, TimelineAliases } from '../../../codegen/index.js';
+
+@Controller({ fragment: FragmentNames.TIMELINE })
+export default class TimelineController {
+  @Inject(TimelineAliases.TIMELINE)
+  declare timeline: TimelineAPI;
+
+  renderTimelineItem(item: TimelineEvent): ReactElement {
+    return (
+      <CardContainer {...item} superscription={this.timeline.getSuperscription()} superscriptionEntry={this.timeline.getSuperscriptionEntry()}>
+        <CardContainerBody>
+          <CardContainerZone flexDirection={LayoutFlexDirection.COLUMN} size={100}>
+            <Text bold size={TextFontSize.SMALL} type={TextType.SECONDARY} value={item.label} />
+            <Text size={TextFontSize.SMALL} type={TextType.SECONDARY} value={item.description} />
+          </CardContainerZone>
+        </CardContainerBody>
+      </CardContainer>
+    );
+  }
+
+  renderTimelineHeader(entry: string, data: TimelineEvent[]): ReactElement {
+    return (
+      <Panel alignItems={LayoutAlign.CENTER} flexDirection={LayoutFlexDirection.ROW} justifyContent={LayoutJustify.SPACEAROUND}>
+        <Text bold size={TextFontSize.MEDIUM} value={entry} />
+        <Text bold size={TextFontSize.SMALL} value={`(${data.length})`} />
+      </Panel>
+    );
+  }
+
+  renderTimelineHeaderTimeSlot(data: TimelineEvent[]): ReactElement | null {
+    const event = data[0];
+
+    if (!event) {
+      return null;
+    }
+
+    const superscription = this.timeline.getSuperscription();
+    const superscriptionEntry = this.timeline.getSuperscriptionEntry();
+    const legendItem = superscription.find(legendItem => legendItem.value === event[superscriptionEntry]);
+
+    return (
+      <Tag color={legendItem?.color} value={event.status} />
+    );
+  }
+
+  @OnDynamicContentRender(TimelineAliases.TIMELINE)
+  onRenderInformationList(event: RenderEvent): void {
+    const { data, entry, render, type } = event;
+
+    if (type === 'item') {
+      render(() => this.renderTimelineItem(data as unknown as TimelineEvent));
+    }
+
+    if (type === 'groupHeader') {
+      render(() => this.renderTimelineHeader(entry, data as unknown as TimelineEvent[]));
+    }
+
+    if (type === 'groupHeaderTimeSlotStart') {
+      render(() => this.renderTimelineHeaderTimeSlot(data as unknown as TimelineEvent[]));
+    }
+  }
+}
+```
+</Details>
+
+### Data Structure
+
+The Timeline component structures its data through event objects that provide essential information about each timeline entry. Each event must conform to the [TimelineEvent](https://github.com/philips-internal/oswald/blob/c439b57e966dd3c473a72f15593a1e31f745bf57/packages/components/src/components/timeline/timeline-types.ts#L10-L40) interface, which defines both required and optional properties while remaining extensible for additional custom data.
+
+<Details summary={<summary>Example</summary>}>
+```tsx
+interface CustomTimelineEvent extends TimelineEvent {
+  location: string;
+  priority: string;
+}
+
+const events: CustomTimelineEvent[] = [
+  {
+    id: 'evt-001',
+    label: 'Project Kickoff',
+    description: 'Initial meeting to discuss project scope and objectives',
+    status: 'scheduled',
+    start: '2024-12-13T09:00:00Z',
+    end: '2024-12-13T10:30:00Z',
+    location: 'Conference Room 3A',
+    priority: 'high'
+  },
+  {
+    id: 'evt-002',
+    label: 'Design Review',
+    description: 'Review of proposed system architecture',
+    status: 'in-progress',
+    start: '2024-12-13T11:00:00Z',
+    end: '2024-12-13T12:00:00Z',
+    location: 'Virtual Meeting Room',
+    priority: 'medium',
+  },
+  {
+    id: 'evt-003',
+    label: 'Team Sync',
+    description: 'Weekly team synchronization meeting',
+    status: 'completed',
+    start: '2024-12-13T14:00:00Z',
+    end: '2024-12-13T15:00:00Z',
+    location: 'Meeting Room 2B',
+    priority: 'low'
+  },
+  {
+    id: 'evt-004',
+    label: 'Client Presentation',
+    description: 'Presentation of project progress to stakeholders',
+    status: 'scheduled',
+    start: '2024-12-13T13:00:00Z',
+    end: '2024-12-13T17:30:00Z',
+    location: 'Main Auditorium',
+    priority: 'high',
+    longDurationDescription: 'Full project status review with Q&A session'
+  }
+];
+```
+</Details>
+
+### Samples
+
+A complete example of the component in use, including custom item rendering, can be found in Oswald's [sample application](pathname:///../sample/application/timeline).
